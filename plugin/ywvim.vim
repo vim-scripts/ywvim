@@ -30,10 +30,10 @@ if exists("g:ywvim_ims")
         let midx += 1
         let fidx = 0
         for f in m[1 : -1]
-            if index(m, f) == 2
-                break
-            endif
             let fidx += 1
+            if match(f, '.*\.ywvim') == -1
+                continue
+            endif
             if f != '' && !filereadable(f)
                 let ffix = globpath(expand("<sfile>:p:h"), "*/**/" . f)
                 if ffix != ''
@@ -131,7 +131,7 @@ function s:Ywvim_loadmb(...) "{{{
     endif
     let wlstfile = get(s:ywvim_ims[match(s:ywvim_ims, mb)], 3)
     if filereadable(wlstfile)
-        execute 'let s:ywvim_'.mb.'_wlst = readfile(wlstfile)'
+        execute 'let s:ywvim_' . mb . '_wlst = readfile(wlstfile)'
     else
         unlet! s:ywvim_{mb}_wlst
     endif
@@ -160,7 +160,7 @@ function s:Ywvim_keymap() "{{{
     endif
     lnoremap <silent> <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
     if s:ywvim_esc_autoff
-        inoremap <silent> <buffer> <esc> <C-R>=Ywvim_toggle()<CR><ESC>
+        inoremap <silent> <buffer> <esc> <C-R>=Ywvim_toggle(1)<CR><ESC>
     endif
     return ''
 endfunction
@@ -499,7 +499,7 @@ function Ywvim_toggle(...) "{{{
     if &l:iminsert != 1 && !exists("a:1")
         call <SID>Ywvim_loadmb()
         call <SID>Ywvim_keymap()
-    elseif &l:iminsert == 1 && exists("a:1") && a:1
+    elseif &l:iminsert == 1
         unlet! b:ywvim_base_idxs
         unlet! b:ywvim_base_idxe
         unlet! b:ywvim_complst
