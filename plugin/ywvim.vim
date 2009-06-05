@@ -65,6 +65,12 @@ if exists("g:ywvim_listmax")
 else
     let s:ywvim_listmax = 1
 endif
+if exists("g:ywvim_esc_autoff")
+    let s:ywvim_esc_autoff = g:ywvim_esc_autoff
+    unlet g:ywvim_esc_autoff
+else
+    let s:ywvim_esc_autoff = 0
+endif
 
 function s:Ywvim_getqflist() "{{{ TODO secure can't allow vimgrep except when in insert mode.
     execute 'vimgrep /^' . 'e' . '/j ' . '~/.vim/plugin/ywvim/cangjie.ywvim'
@@ -153,6 +159,9 @@ function s:Ywvim_keymap() "{{{
         execute 'lnoremap <buffer> <expr> ' . s:ywvim_{b:ywvim_active_mb}_pychar . ' <SID>Ywvim_onepinyin()'
     endif
     lnoremap <silent> <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
+    if s:ywvim_esc_autoff
+        inoremap <silent> <buffer> <esc> <C-R>=Ywvim_toggle()<CR><ESC>
+    endif
     return ''
 endfunction
 " inoremap <silent> <expr> <C-\> Ywvim_toggle()
@@ -486,11 +495,11 @@ function s:Ywvim_puncp(p,n) "{{{
     endif
 endfunction
 "}}}
-function Ywvim_toggle() "{{{
-    if &l:iminsert != 1
+function Ywvim_toggle(...) "{{{
+    if &l:iminsert != 1 && !exists("a:1")
         call <SID>Ywvim_loadmb()
         call <SID>Ywvim_keymap()
-    else
+    elseif &l:iminsert == 1 && exists("a:1") && a:1
         unlet! b:ywvim_base_idxs
         unlet! b:ywvim_base_idxe
         unlet! b:ywvim_complst
@@ -501,6 +510,9 @@ endfunction
 function Ywvim_clean() "{{{
     if &l:iminsert != 1
         lmapclear <buffer>
+        if s:ywvim_esc_autoff
+            iunmap <buffer> <esc>
+        endif
     endif
     return ""
 endfunction
