@@ -75,6 +75,18 @@ if exists("g:ywvim_esc_autoff")
 else
     let s:ywvim_esc_autoff = 0
 endif
+if exists("g:ywvim_autoinput")
+    let s:ywvim_autoinput = g:ywvim_autoinput
+    unlet g:ywvim_autoinput
+else
+    let s:ywvim_autoinput = 0
+endif
+if exists("g:ywvim_pagec")
+    let s:ywvim_pagec = g:ywvim_pagec
+    unlet g:ywvim_pagec
+else
+    let s:ywvim_pagec = 0
+endif
 let s:ywvim_pageup_keys = ',-'
 let s:ywvim_pagedn_keys = '.='
 let s:ywvim_inputzh_keys = ' '
@@ -349,6 +361,7 @@ function s:Ywvim_comp(base,...) "{{{
     if !exists("a:1")
         let b:ywvim_pagemax = 1
         let b:ywvim_pagenr = 0
+        let b:ywvim_lastpagenr = 0
         let b:ywvim_pgbuf = {}
         let b:ywvim_pgbuf[0] = b:ywvim_complst
     else
@@ -390,6 +403,9 @@ function s:Ywvim_char(key) "{{{
             elseif exists("b:ywvim_stra_start") && key =~ s:ywvim_{b:ywvim_active_mb}_endcodes
                     let b:ywvim_stra_end = ''
             endif
+            if b:ywvim_pgbuf[b:ywvim_pagenr][0] == b:ywvim_pgbuf[b:ywvim_pagenr][-1] && s:ywvim_autoinput
+                return b:ywvim_pgbuf[b:ywvim_pagenr][0].word
+            endif
             let b:ywvim_stra_start = ''
             let statusl = [(<SID>Ywvim_echopre()).'['.matchstr(s:ywvim_{b:ywvim_active_mb}_imname, '^.').']', char, "[".(b:ywvim_pagenr+1)."]", charcomp]
             call <SID>Ywvim_echoresult(statusl)
@@ -399,9 +415,16 @@ function s:Ywvim_char(key) "{{{
             if !has_key(b:ywvim_pgbuf, b:ywvim_pagenr)
                 let page = <SID>Ywvim_comp(char,b:ywvim_startline,b:ywvim_endchar)
                 if page != []
+                    if b:ywvim_lastpagenr <= b:ywvim_pagenr
+                        let b:ywvim_lastpagenr = b:ywvim_pagenr
+                    endif
                     let b:ywvim_pgbuf[b:ywvim_pagenr] = page
                 else
-                    let b:ywvim_pagenr -= 1
+                    if s:ywvim_pagec
+                        let b:ywvim_pagenr = 0
+                    else
+                        let b:ywvim_pagenr -= 1
+                    endif
                 endif
             endif
             let statusl = [(<SID>Ywvim_echopre()).'['.matchstr(s:ywvim_{b:ywvim_active_mb}_imname, '^.').']', char, "[".(b:ywvim_pagenr+1)."]", b:ywvim_pgbuf[b:ywvim_pagenr]]
@@ -410,6 +433,8 @@ function s:Ywvim_char(key) "{{{
             " <pageup>
             if b:ywvim_pagenr > 0
                 let b:ywvim_pagenr -= 1
+            elseif s:ywvim_pagec
+                let b:ywvim_pagenr = b:ywvim_lastpagenr
             endif
             let statusl = [(<SID>Ywvim_echopre()).'['.matchstr(s:ywvim_{b:ywvim_active_mb}_imname, '^.').']', char, "[".(b:ywvim_pagenr+1)."]", b:ywvim_pgbuf[b:ywvim_pagenr]]
             call <SID>Ywvim_echoresult(statusl)
