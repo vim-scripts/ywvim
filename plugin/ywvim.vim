@@ -17,32 +17,31 @@ let s:loaded_ywvim = 1
 
 scriptencoding utf-8
 
-" 输入法简称 = s:ywvim_ims[match(s:ywvim_ims, b:ywvim_active_mb)][0]
-" 码表文件 = s:ywvim_ims[match(s:ywvim_ims, b:ywvim_active_mb)][1]
-" 反查码表文件 = s:ywvim_ims[match(s:ywvim_ims, b:ywvim_active_mb)][2]
-" 白名单文件 = s:ywvim_ims[match(s:ywvim_ims, b:ywvim_active_mb)][3]
+let s:ywvim_path = expand("<sfile>:p:h")
 if exists("g:ywvim_ims")
     let s:ywvim_ims = g:ywvim_ims
     unlet g:ywvim_ims
-    let path = globpath(expand("<sfile>:p:h"), "**/*.ywvim")
-    let midx = -1
     for m in s:ywvim_ims
-        let midx += 1
-        let fidx = 0
-        for f in m[1 : -1]
-            let fidx += 1
-            if match(f, '.*\.ywvim') == -1
-                continue
-            endif
-            if f != '' && !filereadable(f)
-                let ffix = globpath(expand("<sfile>:p:h"), '/**/' . f)
-                if ffix != ''
-                    let s:ywvim_ims[midx][fidx] = ffix
-                else
-                    let s:ywvim_ims[midx][fidx] = ''
+        let mbsname = m[0]
+        if get(m, 2) != ''
+            if !filereadable(m[2])
+                let s:ywvim_{mbsname}_mbfile = globpath(s:ywvim_path, '/**/' . m[2])
+                if s:ywvim_{mbsname}_mbfile == ''
+                    continue
                 endif
+            else
+                let s:ywvim_{mbsname}_mbfile = m[2]
             endif
-        endfor
+        else
+            continue
+        endif
+        let s:ywvim_{mbsname}_imname = m[1]
+        if exists("g:ywvim_{mbsname}")
+            let s:ywvim_{mbsname} = g:ywvim_{mbsname}
+            unlet g:ywvim_{mbsname}
+        else
+            let s:ywvim_{mbsname} = {}
+        endif
     endfor
 else
     finish
@@ -99,6 +98,18 @@ if exists("g:ywvim_chinesecode")
 else
     let s:ywvim_chinesecode = 1
 endif
+if exists("g:ywvim_wlst_on")
+    let s:ywvim_wlst_on = g:ywvim_wlst_on
+    unlet g:ywvim_wlst_on
+else
+    let s:ywvim_wlst_on = 0
+endif
+if exists("g:ywvim_whitelstfile")
+    if g:ywvim_whitelstfile != ''
+        let s:ywvim_whitelstfile = g:ywvim_whitelstfile
+    endif
+    unlet g:ywvim_whitelstfile
+endif
 let s:ywvim_pageup_keys = ',-'
 let s:ywvim_pagedn_keys = '.='
 let s:ywvim_inputzh_keys = ' '
@@ -123,19 +134,11 @@ function s:Ywvim_loadmb(...) "{{{
     else
         let mb = a:1
     endif
-    if !exists("b:ywvim_chinesepunc_on")
-        let b:ywvim_chinesepunc = s:ywvim_chinesepunc
-    endif
-    if !exists("b:ywvim_wlst_on")
-        let b:ywvim_wlst_on=1
-    endif
-    if !exists("b:ywvim_listmax")
-        let b:ywvim_listmax = s:ywvim_listmax
-    endif
     if exists("s:ywvim_{mb}_loaded")
         return ''
     endif
-    let s:ywvim_{mb}_flst = filter(readfile(s:ywvim_ims[match(s:ywvim_ims, mb)][1]), "v:val !~ '^\s*$'")
+    let s:ywvim_{mb}_flst = filter(readfile(s:ywvim_{mb}_mbfile), "v:val !~ '^\s*$'")
+    " let s:ywvim_{mb}_flst = filter(readfile(s:ywvim_ims[match(s:ywvim_ims, mb)][1]), "v:val !~ '^\s*$'")
     " let s:ywvim_{mb}_flst = readfile(s:ywvim_ims[match(s:ywvim_ims, mb)][1])
     let s:ywvim_{mb}_desc_idxs = index(s:ywvim_{mb}_flst, '[Description]') + 1
     let s:ywvim_{mb}_desc_idxe = index(s:ywvim_{mb}_flst, '[CharDefinition]') - 1
@@ -148,8 +151,11 @@ function s:Ywvim_loadmb(...) "{{{
     let desclst = s:ywvim_{mb}_flst[s:ywvim_{mb}_desc_idxs : s:ywvim_{mb}_desc_idxe]
     let s:ywvim_{mb}_usedcodes = matchstr(matchstr(desclst, '^UsedCodes'), '=\s*\zs.*')
     let s:ywvim_{mb}_endcodes = '[' . matchstr(matchstr(desclst, '^EndCodes'), '=\zs.*') . ']'
-    let s:ywvim_{mb}_maxcodes = matchstr(matchstr(desclst, '^MaxCodes'), '=\s*\zs.*')
-    let s:ywvim_{mb}_maxelement = matchstr(matchstr(desclst, '^MaxElement'), '=\s*\zs.*')
+    if has_key(s:ywvim_{mb}, 'maxelement')
+        let s:ywvim_{mb}_maxelement = s:ywvim_{mb}['maxelement']
+    else
+        let s:ywvim_{mb}_maxelement = matchstr(matchstr(desclst, '^MaxElement'), '=\s*\zs.*')
+    endif
     let s:ywvim_{mb}_enchar = matchstr(matchstr(desclst, '^EnChar'), '=\s*\zs.*')
     let s:ywvim_{mb}_pychar = matchstr(matchstr(desclst, '^PyChar'), '=\s*\zs.*')
     let s:ywvim_{mb}_inputzh_secondkeys = '[' . matchstr(matchstr(desclst, '^InputZhSecKeys'), '=\zs.*') . ']'
@@ -169,23 +175,46 @@ function s:Ywvim_loadmb(...) "{{{
     let s:ywvim_{mb}_pageup_keys = '[' . s:ywvim_pageup_keys . s:ywvim_{mb}_pageupextrakeys . ']'
     let s:ywvim_{mb}_pagedn_keys = '[' . s:ywvim_pagedn_keys . s:ywvim_{mb}_pagednextrakeys . ']'
     let s:ywvim_{mb}_helpmbstatus = s:ywvim_helpmbstatus
-    let helpmb = get(s:ywvim_ims[match(s:ywvim_ims, mb)], 2)
-    let helpmbp = match(s:ywvim_ims, helpmb)
-    if helpmb != '' && helpmbp != -1
+    if has_key(s:ywvim_{mb}, 'helpim')
+        let helpmb = s:ywvim_{mb}['helpim']
         if !exists("s:ywvim_{helpmb}_flst")
             call <SID>Ywvim_loadmb(helpmb)
         endif
         let s:ywvim_{mb}_helpmb = helpmb
-    else
-        unlet! s:ywvim_{mb}_helpmb
     endif
-    let wlstfile = get(s:ywvim_ims[match(s:ywvim_ims, mb)], 3)
-    if filereadable(wlstfile)
-        let s:ywvim_{mb}_wlst = readfile(wlstfile)
+    if has_key(s:ywvim_{mb}, 'wlst')
+        let s:ywvim_{mb}_wlst_on = s:ywvim_{mb}['wlst']
     else
-        unlet! s:ywvim_{mb}_wlst
+        let s:ywvim_{mb}_wlst_on = s:ywvim_wlst_on
     endif
-    let s:ywvim_{mb}_imname = matchstr(matchstr(desclst, '^Name'), '=\s*\zs.*')
+    if has_key(s:ywvim_{mb}, 'whitelstfile')
+        let wlstfile = s:ywvim_{mb}['whitelstfile']
+    elseif exists("s:ywvim_whitelstfile")
+        let wlstfile = s:ywvim_whitelstfile
+    endif
+    if exists("wlstfile") && wlstfile != ''
+        if !filereadable(wlstfile)
+            let wlstfile = globpath(s:ywvim_path, '/**/' . wlstfile)
+            if wlstfile != ''
+                let s:ywvim_{mb}_wlst = readfile(wlstfile)
+            endif
+        endif
+    endif
+    if has_key(s:ywvim_{mb}, 'matchexact')
+        let s:ywvim_{mb}_matchexact = s:ywvim_{mb}['matchexact']
+    else
+        let s:ywvim_{mb}_matchexact = s:ywvim_matchexact
+    endif
+    if has_key(s:ywvim_{mb}, 'zhpunc')
+        let s:ywvim_{mb}_chinesepunc = s:ywvim_{mb}['zhpunc']
+    else
+        let s:ywvim_{mb}_chinesepunc = s:ywvim_chinesepunc
+    endif
+    if has_key(s:ywvim_{mb}, 'listmax')
+        let s:ywvim_{mb}_listmax = s:ywvim_{mb}['listmax']
+    else
+        let s:ywvim_{mb}_listmax = s:ywvim_listmax
+    endif
     let s:ywvim_{mb}_punclst = s:ywvim_{mb}_flst[s:ywvim_{mb}_punc_idxs : s:ywvim_{mb}_punc_idxe]
     if &enc != 'utf-8' && has("iconv")
         let s:ywvim_{mb}_imname = iconv(s:ywvim_{mb}_imname, "utf-8", &encoding)
@@ -208,7 +237,7 @@ function s:Ywvim_keymap() "{{{
     for key in sort(split(s:ywvim_{b:ywvim_active_mb}_usedcodes,'\zs'))
         execute 'lnoremap <buffer> <expr> ' . key . '  <SID>Ywvim_char("' . key . '")'
     endfor
-    if b:ywvim_chinesepunc == 1
+    if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 1
         call <SID>Ywvim_keymap_punc()
     endif
     if s:ywvim_{b:ywvim_active_mb}_enchar != ''
@@ -241,12 +270,12 @@ function s:Ywvim_keymap_punc() "{{{
 endfunction
 "}}}
 function s:Ywvim_parameters() "{{{
-    if b:ywvim_chinesepunc == 0
+    if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 0
         let punc='.'
     else
         let punc='。'
     endif
-    if b:ywvim_wlst_on == 1
+    if s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
         let wlst='on'
     else
         let wlst='off'
@@ -255,17 +284,21 @@ function s:Ywvim_parameters() "{{{
     echon "ywvim 参数设置[当前状态]\n"
     echohl Title
     echon "(m)码表切换[" . s:ywvim_{b:ywvim_active_mb}_imname . "]\n"
-    echon "(.)标点切换[" . punc . "]\n"
+    echon "(.)中英标点切换[" . punc . "]\n"
     echon "(p)最大词长[" . s:ywvim_{b:ywvim_active_mb}_maxelement . "]\n"
     echon "(w)白名单开关[" . wlst . "]\n"
-    echon "(l)候选项数[" . b:ywvim_listmax . "]\n"
-    if exists("s:ywvim_".b:ywvim_active_mb."_helpmb")
-        echon "(h)反查码表切换[" . s:ywvim_{b:ywvim_active_mb}_helpmbstatus . "]\n"
+    if exists("s:ywvim_{b:ywvim_active_mb}_helpmb")
+        echon "(h)反查码表开关[" . s:ywvim_{b:ywvim_active_mb}_helpmbstatus . "]\n"
     endif
     echohl None
     let par = ''
-    while par !~ '[m.pwlh]'
-        let par = nr2char(getchar())
+    while par !~ '[m.pwh]'
+        let parcode = getchar()
+        if parcode == 13
+            redraw!
+            return ''
+        endif
+        let par = nr2char(parcode)
     endwhile
     redraw
     if par == 'm'
@@ -277,9 +310,7 @@ function s:Ywvim_parameters() "{{{
                 echohl Number
                 echon nr
                 echohl None
-                " call <SID>Ywvim_loadmb(im[0])
-                " echon '. ' . s:ywvim_{im[0]}_imname . " "
-                echon '. ' . im[0] . " "
+                echon '. ' . s:ywvim_{im[0]}_imname . " "
             endfor
             let getnr = ''
             while getnr !~ '[' . join(range(1, nr), '') . ']'
@@ -291,26 +322,24 @@ function s:Ywvim_parameters() "{{{
             call <SID>Ywvim_keymap()
         endif
     elseif par == '.'
-        if b:ywvim_chinesepunc == 0
+        if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 0
             call <SID>Ywvim_keymap_punc()
-            let b:ywvim_chinesepunc = 1
+            let s:ywvim_{b:ywvim_active_mb}_chinesepunc = 1
         else
             for p in s:ywvim_{b:ywvim_active_mb}_punclst
                 let pl = split(p, '\s\+')
                 execute 'lunmap <silent> <buffer> ' . escape(pl[0], '|')
             endfor
-            let b:ywvim_chinesepunc = 0
+            let s:ywvim_{b:ywvim_active_mb}_chinesepunc = 0
         endif
     elseif par == 'p'
         let s:ywvim_{b:ywvim_active_mb}_maxelement = input('最大词长: ', s:ywvim_{b:ywvim_active_mb}_maxelement)
     elseif par == 'w'
-        if b:ywvim_wlst_on == 1
-            let b:ywvim_wlst_on = 0
+        if s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
+            let s:ywvim_{b:ywvim_active_mb}_wlst_on = 0
         else
-            let b:ywvim_wlst_on = 1
+            let s:ywvim_{b:ywvim_active_mb}_wlst_on = 1
         endif
-    elseif par == 'l'
-        let b:ywvim_listmax = input('候选项数: ', b:ywvim_listmax)
     elseif par == 'h'
         if s:ywvim_{b:ywvim_active_mb}_helpmbstatus == 1
             let s:ywvim_{b:ywvim_active_mb}_helpmbstatus = 0
@@ -325,7 +354,7 @@ endfunction
 function s:Ywvim_comp(base,...) "{{{
     let len_base = len(a:base)
     let exactp = ''
-    if s:ywvim_matchexact
+    if s:ywvim_{b:ywvim_active_mb}_matchexact
         let exactp = ' '
     endif
     let basep = escape(a:base, ']./[') . exactp
@@ -367,8 +396,8 @@ function s:Ywvim_comp(base,...) "{{{
                 let cu = iconv(c, &encoding, "utf-8")
                 let cup = ' ' . cu . ' '
             endif
-            if exists("s:ywvim_".b:ywvim_active_mb."_wlst") && b:ywvim_wlst_on == 1 && strlen(c) <= 3
-                if index(s:ywvim_{b:ywvim_active_mb}_wlst, cu) == -1 && b:ywvim_wlst_on == 1
+            if exists("s:ywvim_{b:ywvim_active_mb}_wlst") && s:ywvim_{b:ywvim_active_mb}_wlst_on == 1 && strlen(c) <= 3
+                if index(s:ywvim_{b:ywvim_active_mb}_wlst, cu) == -1 && s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
                     continue
                 endif
             endif
@@ -377,6 +406,18 @@ function s:Ywvim_comp(base,...) "{{{
             endif
             if exists("s:ywvim_{b:ywvim_active_mb}_helpmb") && s:ywvim_{b:ywvim_active_mb}_helpmbstatus
                 let help = matchstr(matchstr(s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_flst[s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs : s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe], cup), '^\S\+')
+                " let leng = (s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe - s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs) / 4
+                " let lengs = s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs
+                " let lenge = s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs + leng
+                " while 1
+                "     let help = matchstr(matchstr(s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_flst[lengs : lenge], cup), '^\S\+')
+                "     if help == '' || lenge <= s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe
+                "         let lengs += leng
+                "         let lenge += leng
+                "     else
+                "         break
+                "     endif
+                " endwhile
                 if help != ''
                     let help = '<' . help . '>'
                 endif
@@ -389,7 +430,7 @@ function s:Ywvim_comp(base,...) "{{{
             let dic["help"] = help
             let help = ''
             call add(b:ywvim_complst, dic)
-            if nr == b:ywvim_listmax
+            if nr == s:ywvim_{b:ywvim_active_mb}_listmax
                 let s:ywvim_terminate = 1
                 break
             endif
@@ -500,26 +541,31 @@ function s:Ywvim_char(key) "{{{
                 " input Chinese
                 unlet! b:ywvim_stra_end
                 unlet! b:ywvim_stra_start
-                return b:ywvim_pgbuf[b:ywvim_pagenr][0].word
+                if b:ywvim_pgbuf[b:ywvim_pagenr] != []
+                    return b:ywvim_pgbuf[b:ywvim_pagenr][0].word
+                endif
+                redraw!
+                return ""
             elseif key =~ s:ywvim_{b:ywvim_active_mb}_inputzh_secondkeys
                 " input Second Chinese
-                if b:ywvim_pgbuf[b:ywvim_pagenr][0] != b:ywvim_pgbuf[b:ywvim_pagenr][-1]
-                    unlet! b:ywvim_stra_end
-                    unlet! b:ywvim_stra_start
-                    return b:ywvim_pgbuf[b:ywvim_pagenr][1].word
-                else
-                    return b:ywvim_pgbuf[b:ywvim_pagenr][0].word . key
+                if b:ywvim_pgbuf[b:ywvim_pagenr] != []
+                    if b:ywvim_pgbuf[b:ywvim_pagenr][0] != b:ywvim_pgbuf[b:ywvim_pagenr][-1]
+                        unlet! b:ywvim_stra_end
+                        unlet! b:ywvim_stra_start
+                        return b:ywvim_pgbuf[b:ywvim_pagenr][1].word
+                    else
+                        return b:ywvim_pgbuf[b:ywvim_pagenr][0].word . key
+                    endif
                 endif
-            elseif key =~ '[1-' . b:ywvim_listmax . ']'
+                redraw!
+                return ""
+            elseif key =~ '[1-' . s:ywvim_{b:ywvim_active_mb}_listmax . ']'
                 " select
                 if key <= len(b:ywvim_pgbuf[b:ywvim_pagenr])
                     unlet! b:ywvim_stra_end
                     unlet! b:ywvim_stra_start
                     return b:ywvim_pgbuf[b:ywvim_pagenr][key - 1].word
                 else
-                    " unlet! b:ywvim_stra_end
-                    " unlet! b:ywvim_stra_start
-                    " return key
                     call <SID>Ywvim_echoresult(statusl)
                 endif
             elseif key =~ s:ywvim_{b:ywvim_active_mb}_inputen_keys
@@ -536,11 +582,13 @@ function s:Ywvim_char(key) "{{{
                 " <C-^>
                 unlet! b:ywvim_stra_end
                 unlet! b:ywvim_stra_start
+                redraw!
                 return ""
             elseif keycode == 23
                 " <C-w>
                 unlet! b:ywvim_stra_end
                 unlet! b:ywvim_stra_start
+                redraw!
                 return ""
             elseif keycode == expand("\<BS>")
                 " <BS>
@@ -551,8 +599,8 @@ function s:Ywvim_char(key) "{{{
                 if char != ''
                     let charcomp = <SID>Ywvim_comp(char)
                     let charcomplen = len(b:ywvim_complst)
-                    let pgmax = charcomplen / b:ywvim_listmax
-                    if charcomplen % b:ywvim_listmax
+                    let pgmax = charcomplen / s:ywvim_{b:ywvim_active_mb}_listmax
+                    if charcomplen % s:ywvim_{b:ywvim_active_mb}_listmax
                         let pgmax += 1
                     endif
                     let statusl = [(<SID>Ywvim_echopre()).'['.matchstr(s:ywvim_{b:ywvim_active_mb}_imname, '^.').']', showchar, "[".(b:ywvim_pagenr+1)."]", charcomp]
@@ -566,8 +614,10 @@ function s:Ywvim_char(key) "{{{
                 redraw
                 unlet! b:ywvim_stra_end
                 unlet! b:ywvim_stra_end
-                " return char . key
-                return b:ywvim_pgbuf[b:ywvim_pagenr][0].word . key
+                if b:ywvim_pgbuf[b:ywvim_pagenr] != []
+                    return b:ywvim_pgbuf[b:ywvim_pagenr][0].word . key
+                endif
+                return key
             endif
         endif
         let keycode = getchar()
