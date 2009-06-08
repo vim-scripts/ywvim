@@ -639,7 +639,7 @@ function s:Ywvim_g2b(i) "{{{
     unlet! b:ywvim_stra_end
     unlet! b:ywvim_stra_start
     if s:ywvim_conv != ''
-        let g2bidx = index(s:ywvim_clst, a:s)
+        let g2bidx = index(s:ywvim_clst, sb)
         if g2bidx != -1 && s:ywvim_conv == 'g2b' && g2bidx < 2467
             let sb = s:ywvim_clst[g2bidx + 2467]
         elseif g2bidx > 2467 && s:ywvim_conv == 'b2g'
