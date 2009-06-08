@@ -35,13 +35,13 @@ if exists("g:ywvim_ims")
         else
             continue
         endif
-        let s:ywvim_{mbsname}_imname = m[1]
         if exists("g:ywvim_{mbsname}")
             let s:ywvim_{mbsname} = g:ywvim_{mbsname}
             unlet g:ywvim_{mbsname}
         else
             let s:ywvim_{mbsname} = {}
         endif
+        let s:ywvim_{mbsname}_imname = m[1]
     endfor
 else
     finish
@@ -60,7 +60,7 @@ if exists("g:ywvim_listmax")
     endif
     unlet g:ywvim_listmax
 else
-    let s:ywvim_listmax = 9
+    let s:ywvim_listmax = 5
 endif
 if exists("g:ywvim_esc_autoff")
     let s:ywvim_esc_autoff = g:ywvim_esc_autoff
@@ -78,7 +78,7 @@ if exists("g:ywvim_pagec")
     let s:ywvim_pagec = g:ywvim_pagec
     unlet g:ywvim_pagec
 else
-    let s:ywvim_pagec = 0
+    let s:ywvim_pagec = 1
 endif
 if exists("g:ywvim_helpmbstatus")
     let s:ywvim_helpmbstatus = g:ywvim_helpmbstatus
@@ -217,13 +217,15 @@ function s:Ywvim_loadmb(...) "{{{
     endif
     let s:ywvim_{mb}_punclst = s:ywvim_{mb}_flst[s:ywvim_{mb}_punc_idxs : s:ywvim_{mb}_punc_idxe]
     if &enc != 'utf-8' && has("iconv")
-        let s:ywvim_{mb}_imname = iconv(s:ywvim_{mb}_imname, "utf-8", &encoding)
         for ip in range(0,len(s:ywvim_{mb}_punclst)-1)
             let s:ywvim_{mb}_punclst[ip] = iconv(s:ywvim_{mb}_punclst[ip], "utf-8", &encoding)
         endfor
     endif
     let s:ywvim_{mb}_chardefs = {}
     for def in s:ywvim_{mb}_flst[s:ywvim_{mb}_chardef_idxs : s:ywvim_{mb}_chardef_idxe]
+        if &enc != 'utf-8' && has("iconv")
+            let def = iconv(def, "utf-8", &encoding)
+        endif
         let chardef = split(def, '\s\+')
         if len(chardef) == 2
             execute 'let s:ywvim_{mb}_chardefs["' . chardef[0] . '"] = "' . chardef[1] . '"'
@@ -247,6 +249,7 @@ function s:Ywvim_keymap() "{{{
         execute 'lnoremap <buffer> <expr> ' . s:ywvim_{b:ywvim_active_mb}_pychar . ' <SID>Ywvim_onepinyin()'
     endif
     lnoremap <silent> <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
+    lmap <silent> <buffer> <C-m> <C-R>=<SID>Ywvim_wlst_toggle()<CR>
     if s:ywvim_esc_autoff
         inoremap <silent> <buffer> <esc> <C-R>=Ywvim_toggle(0)<CR><ESC>
     endif
@@ -335,11 +338,7 @@ function s:Ywvim_parameters() "{{{
     elseif par == 'p'
         let s:ywvim_{b:ywvim_active_mb}_maxelement = input('最大词长: ', s:ywvim_{b:ywvim_active_mb}_maxelement)
     elseif par == 'w'
-        if s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
-            let s:ywvim_{b:ywvim_active_mb}_wlst_on = 0
-        else
-            let s:ywvim_{b:ywvim_active_mb}_wlst_on = 1
-        endif
+        call <SID>Ywvim_wlst_toggle()
     elseif par == 'h'
         if s:ywvim_{b:ywvim_active_mb}_helpmbstatus == 1
             let s:ywvim_{b:ywvim_active_mb}_helpmbstatus = 0
@@ -404,14 +403,16 @@ function s:Ywvim_comp(base,...) "{{{
             if s:ywvim_{b:ywvim_active_mb}_maxelement > 0 && strlen(c) > 3 * s:ywvim_{b:ywvim_active_mb}_maxelement
                 continue
             endif
-            if exists("s:ywvim_{b:ywvim_active_mb}_helpmb") && s:ywvim_{b:ywvim_active_mb}_helpmbstatus
+            if s:ywvim_{b:ywvim_active_mb}_helpmbstatus && exists("s:ywvim_{b:ywvim_active_mb}_helpmb") && strlen(c) <= 3
                 let help = matchstr(matchstr(s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_flst[s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs : s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe], cup), '^\S\+')
-                " let leng = (s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe - s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs) / 4
+                " let leng = (s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe - s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs) / 2
                 " let lengs = s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs
                 " let lenge = s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxs + leng
-                " while 1
-                "     let help = matchstr(matchstr(s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_flst[lengs : lenge], cup), '^\S\+')
-                "     if help == '' || lenge <= s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe
+                " while help == ''
+                "     if help == ''
+                "         let help = matchstr(matchstr(s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_flst[lengs : lenge], cup), '^\S\+')
+                "     endif
+                "     if lenge < s:ywvim_{s:ywvim_{b:ywvim_active_mb}_helpmb}_main_idxe
                 "         let lengs += leng
                 "         let lenge += leng
                 "     else
@@ -626,7 +627,11 @@ endfunction
 "}}}
 function s:Ywvim_echoresult(str) "{{{
     redraw
-    echohl Title | echon a:str[0]
+    if exists("s:ywvim_{b:ywvim_active_mb}_wlst") && s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
+        echohl Title | echon a:str[0]
+    else
+        echohl WarningMsg | echon a:str[0]
+    endif
     echohl None | echon ' '
     echon a:str[1]
     echon ' '
@@ -677,6 +682,15 @@ function s:Ywvim_puncp(p,n) "{{{
         execute 'unlet ' . a:n
         return pl[2]
     endif
+endfunction
+"}}}
+function s:Ywvim_wlst_toggle() "{{{
+    if s:ywvim_{b:ywvim_active_mb}_wlst_on == 1
+        let s:ywvim_{b:ywvim_active_mb}_wlst_on = 0
+    else
+        let s:ywvim_{b:ywvim_active_mb}_wlst_on = 1
+    endif
+    return ''
 endfunction
 "}}}
 function Ywvim_toggle(...) "{{{
