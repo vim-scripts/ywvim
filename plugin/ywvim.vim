@@ -632,12 +632,21 @@ function s:Ywvim_returnchar(...) "{{{
         let sb = a:1
         if a:1 =~ '\d'
             let sb = b:ywvim_pgbuf[b:ywvim_pagenr][a:1].word
+            let sbu = sb
+            if &encoding != 'utf-8' && has("iconv")
+                let sbu = iconv(sb, &encoding, "utf-8")
+            endif
             if s:ywvim_conv != ''
-                let g2bidx = index(s:ywvim_clst, sb)
-                if g2bidx != -1 && s:ywvim_conv == 'g2b' && g2bidx < s:ywvim_clst_sep
-                    let sb = s:ywvim_clst[g2bidx + s:ywvim_clst_sep]
-                elseif g2bidx > s:ywvim_clst_sep && s:ywvim_conv == 'b2g'
-                    let sb = s:ywvim_clst[g2bidx - s:ywvim_clst_sep]
+                let g2bidx = index(s:ywvim_clst, sbu)
+                if g2bidx != -1
+                    if s:ywvim_conv == 'g2b' && g2bidx < s:ywvim_clst_sep
+                        let sb = s:ywvim_clst[g2bidx + s:ywvim_clst_sep]
+                    elseif s:ywvim_conv == 'b2g' && g2bidx > s:ywvim_clst_sep
+                        let sb = s:ywvim_clst[g2bidx - s:ywvim_clst_sep]
+                    endif
+                    if &encoding != 'utf-8' && has("iconv")
+                        let sb = iconv(sb, "utf-8", &encoding)
+                    endif
                 endif
             endif
         endif
