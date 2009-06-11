@@ -40,11 +40,10 @@ if exists("g:ywvim_ims")
             unlet g:ywvim_{mbsname}
         endif
         let s:ywvim_{mbsname}_imname = m[1]
-        let s:ywvim_{mbsname}_imnameabbr = matchstr(s:ywvim_{mbsname}_imname, '^.')
-        if &enc != 'utf-8' && has("iconv")
+        if &encoding != 'utf-8' && has("iconv")
             let s:ywvim_{mbsname}_imname = iconv(s:ywvim_{mbsname}_imname, 'utf-8', &encoding)
-            let s:ywvim_{mbsname}_imnameabbr = iconv(s:ywvim_{mbsname}_imnameabbr, 'utf-8', &encoding)
         endif
+        let s:ywvim_{mbsname}_imnameabbr = matchstr(s:ywvim_{mbsname}_imname, '^.')
     endfor
 else
     finish
@@ -218,9 +217,9 @@ function s:Ywvim_keymap() "{{{
     if s:ywvim_{b:ywvim_active_mb}_pychar != ''
         execute 'lnoremap <buffer> <expr> ' . s:ywvim_{b:ywvim_active_mb}_pychar . ' <SID>Ywvim_onepinyin()'
     endif
-    lnoremap <silent> <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
+    lnoremap <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
     if s:ywvim_esc_autoff
-        inoremap <silent> <buffer> <esc> <C-R>=Ywvim_toggle_1()<CR><C-R>=Ywvim_toggle_2()<CR><C-^><C-R>=Ywvim_clean()<CR><ESC>
+        inoremap <buffer> <esc> <C-R>=Ywvim_toggle_1()<CR><C-R>=Ywvim_toggle_2()<CR><C-^><C-R>=Ywvim_clean()<CR><ESC>
     endif
     return ''
 endfunction
@@ -290,7 +289,7 @@ function s:Ywvim_parameters() "{{{
         else
             for p in s:ywvim_{b:ywvim_active_mb}_punclst
                 let pl = split(p, '\s\+')
-                execute 'lunmap <silent> <buffer> ' . escape(pl[0], '|')
+                execute 'lunmap <buffer> ' . escape(pl[0], '|')
             endfor
         endif
         let s:ywvim_{b:ywvim_active_mb}_chinesepunc = 1 - s:ywvim_{b:ywvim_active_mb}_chinesepunc
