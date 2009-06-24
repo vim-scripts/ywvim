@@ -1,6 +1,6 @@
 " mY oWn VimIM.
 " Author: Wu, Yue <vanopen@gmail.com>
-" Last Change:	2009 Jun 8
+" Last Change:	2009 Jun 11
 
 " Copyright 2008-2009 Yue Wu. All rights reserved.
 
@@ -48,10 +48,10 @@ if exists("g:ywvim_ims")
 else
     finish
 endif
-let s:ywvim_chinesepunc = 1
-if exists("g:ywvim_chinesepunc")
-    let s:ywvim_chinesepunc = g:ywvim_chinesepunc
-    unlet g:ywvim_chinesepunc
+let s:ywvim_zhpunc = 1
+if exists("g:ywvim_zhpunc")
+    let s:ywvim_zhpunc = g:ywvim_zhpunc
+    unlet g:ywvim_zhpunc
 endif
 let s:ywvim_listmax = 5
 if exists("g:ywvim_listmax")
@@ -61,7 +61,7 @@ if exists("g:ywvim_listmax")
     endif
     unlet g:ywvim_listmax
 endif
-let s:ywvim_esc_autoff = 0
+let s:ywvim_esc_autoff = 1
 if exists("g:ywvim_esc_autoff")
     let s:ywvim_esc_autoff = g:ywvim_esc_autoff
     unlet g:ywvim_esc_autoff
@@ -176,9 +176,9 @@ function s:Ywvim_loadmb(...) "{{{
     if has_key(s:ywvim_{mb}, 'matchexact')
         let s:ywvim_{mb}_matchexact = s:ywvim_{mb}['matchexact']
     endif
-    let s:ywvim_{mb}_chinesepunc = s:ywvim_chinesepunc
+    let s:ywvim_{mb}_zhpunc = s:ywvim_zhpunc
     if has_key(s:ywvim_{mb}, 'zhpunc')
-        let s:ywvim_{mb}_chinesepunc = s:ywvim_{mb}['zhpunc']
+        let s:ywvim_{mb}_zhpunc = s:ywvim_{mb}['zhpunc']
     endif
     let s:ywvim_{mb}_listmax = s:ywvim_listmax
     if has_key(s:ywvim_{mb}, 'listmax')
@@ -208,7 +208,7 @@ function s:Ywvim_keymap() "{{{
     for key in sort(split(s:ywvim_{b:ywvim_active_mb}_usedcodes,'\zs'))
         execute 'lnoremap <buffer> <expr> ' . key . '  <SID>Ywvim_char("' . key . '")'
     endfor
-    if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 1
+    if s:ywvim_{b:ywvim_active_mb}_zhpunc == 1
         call <SID>Ywvim_keymap_punc()
     endif
     if s:ywvim_{b:ywvim_active_mb}_enchar != ''
@@ -219,11 +219,12 @@ function s:Ywvim_keymap() "{{{
     endif
     lnoremap <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_parameters()<CR>
     if s:ywvim_esc_autoff
-        inoremap <buffer> <esc> <C-R>=Ywvim_toggle_1()<CR><C-R>=Ywvim_toggle_2()<CR><C-^><C-R>=Ywvim_clean()<CR><ESC>
+        inoremap <buffer> <esc> <C-R>=Ywvim_toggle()<CR><C-^><C-R>=Ywvim_clean()<CR><ESC>
     endif
     return ''
 endfunction
-map! <silent> <C-\> <C-R>=Ywvim_toggle_1()<CR><C-R>=Ywvim_toggle_2()<CR><C-^><C-R>=Ywvim_clean()<CR>
+" map! <silent> <C-\> <C-R>=Ywvim_toggle_1()<CR><C-R>=Ywvim_toggle_2()<CR><C-^><C-R>=Ywvim_clean()<CR>
+map! <silent> <C-\> <C-R>=Ywvim_toggle()<CR><C-^><C-R>=Ywvim_clean()<CR>
 "}}}
 function s:Ywvim_keymap_punc() "{{{
     for p in s:ywvim_{b:ywvim_active_mb}_punclst
@@ -240,7 +241,7 @@ endfunction
 "}}}
 function s:Ywvim_parameters() "{{{
     let punc='。'
-    if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 0
+    if s:ywvim_{b:ywvim_active_mb}_zhpunc == 0
         let punc='.'
     endif
     let pars = ''
@@ -284,7 +285,7 @@ function s:Ywvim_parameters() "{{{
         call <SID>Ywvim_loadmb()
         call <SID>Ywvim_keymap()
     elseif par == '.'
-        if s:ywvim_{b:ywvim_active_mb}_chinesepunc == 0
+        if s:ywvim_{b:ywvim_active_mb}_zhpunc == 0
             call <SID>Ywvim_keymap_punc()
         else
             for p in s:ywvim_{b:ywvim_active_mb}_punclst
@@ -292,7 +293,7 @@ function s:Ywvim_parameters() "{{{
                 execute 'lunmap <buffer> ' . escape(pl[0], '|')
             endfor
         endif
-        let s:ywvim_{b:ywvim_active_mb}_chinesepunc = 1 - s:ywvim_{b:ywvim_active_mb}_chinesepunc
+        let s:ywvim_{b:ywvim_active_mb}_zhpunc = 1 - s:ywvim_{b:ywvim_active_mb}_zhpunc
     elseif par == 'p'
         let s:ywvim_{b:ywvim_active_mb}_maxelement = input('最大词长: ', s:ywvim_{b:ywvim_active_mb}_maxelement)
     elseif par == 'g'
@@ -620,7 +621,6 @@ function s:Ywvim_returnchar(...) "{{{
     unlet! b:ywvim_stra_start
     let sb = ''
     if exists("a:1")
-        redraw
         let sb = a:1
         if a:1 =~ '\d\+'
             let sb = b:ywvim_pgbuf[b:ywvim_pagenr][a:1].word
@@ -646,21 +646,14 @@ function s:Ywvim_returnchar(...) "{{{
         redraw!
     elseif getcmdtype() != '@'
         echo '' | echon getcmdtype() . getcmdline()
-    else
-        let sb = " \<BS>"
+    endif
+    if mode() !~ '[i]'
+        let sb = sb . " \<BS>"
     endif
     return sb
 endfunction
 "}}}
-function Ywvim_toggle_1() "{{{
-    if !exists('b:ywvim_on_' . mode())
-        lmapclear <buffer>
-        return "\<C-^>"
-    endif
-    return ""
-endfunction
-"}}}
-function Ywvim_toggle_2() "{{{
+function Ywvim_toggle() "{{{
     let onvar = 'b:ywvim_on_' . mode()
     if !exists(onvar)
         call <SID>Ywvim_loadmb()
@@ -677,12 +670,12 @@ endfunction
 "}}}
 function Ywvim_clean() "{{{
     let onvar = 'b:ywvim_on_' . mode()
-    if !exists(onvar)
-        lmapclear <buffer>
-        if s:ywvim_esc_autoff
-            iunmap <buffer> <esc>
-        endif
-    endif
+    " if !exists(onvar)
+    "     lmapclear <buffer>
+    "     if s:ywvim_esc_autoff
+    "         iunmap <buffer> <esc>
+    "     endif
+    " endif
     return ""
 endfunction
 "}}}
