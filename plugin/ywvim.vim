@@ -1,16 +1,7 @@
 " mY oWn VimIM.
 " Author: Wu, Yue <vanopen@gmail.com>
 " Last Change:	2009 Jun 11
-
-" Copyright 2008-2009 Yue Wu. All rights reserved.
-
-" Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-" Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-" Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-" THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE FREEBSD PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-" The views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of the FreeBSD Project.
+" License: BSD
 
 if exists("s:loaded_ywvim") | finish | endif
 let s:loaded_ywvim = 1
@@ -61,7 +52,7 @@ if exists("g:ywvim_listmax")
     endif
     unlet g:ywvim_listmax
 endif
-let s:ywvim_esc_autoff = 1
+let s:ywvim_esc_autoff = 0
 if exists("g:ywvim_esc_autoff")
     let s:ywvim_esc_autoff = g:ywvim_esc_autoff
     unlet g:ywvim_esc_autoff
@@ -292,6 +283,9 @@ function s:Ywvim_parameters() "{{{
                 let pl = split(p, '\s\+')
                 execute 'lunmap <buffer> ' . escape(pl[0], '|')
             endfor
+        endif
+        if s:ywvim_{b:ywvim_active_mb}_enchar != ''
+            execute 'lnoremap <buffer> <expr> ' . s:ywvim_{b:ywvim_active_mb}_enchar . ' <SID>Ywvim_enmode()'
         endif
         let s:ywvim_{b:ywvim_active_mb}_zhpunc = 1 - s:ywvim_{b:ywvim_active_mb}_zhpunc
     elseif par == 'p'
@@ -588,6 +582,11 @@ function s:Ywvim_enmode() "{{{
     if keycode != char2nr(s:ywvim_{b:ywvim_active_mb}_enchar)
         let enstr = input("[En]: ", nr2char(keycode))
         call histdel("input", -1)
+    elseif s:ywvim_{b:ywvim_active_mb}_zhpunc == 1
+            let enstrpre = matchstr(matchstr(s:ywvim_{b:ywvim_active_mb}_punclst, enstr), '.$')
+            if enstrpre != ''
+                let enstr = enstrpre
+            endif
     endif
     redraw!
     return enstr
