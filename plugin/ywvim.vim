@@ -91,6 +91,15 @@ let s:ywvim_conv = ''
 if exists("g:ywvim_conv")
     let s:ywvim_conv = g:ywvim_conv
     unlet g:ywvim_conv
+    let s:ywvim_preconv = 'g2b'
+    if exists("g:ywvim_preconv")
+        let s:ywvim_preconv = g:ywvim_preconv
+    endif
+endif
+let s:ywvim_lockb = 0
+if exists("g:ywvim_lockb")
+    let s:ywvim_lockb = g:ywvim_lockb
+    unlet g:ywvim_lockb
 endif
 let s:ywvim_pageup_keys = ',-'
 let s:ywvim_pagedn_keys = '.='
@@ -301,7 +310,7 @@ function s:Ywvim_parameters() "{{{
         elseif exists("s:oldywvim_conv")
             let s:ywvim_conv = s:oldywvim_conv
         else
-            let s:ywvim_conv = 'g2b'
+            let s:ywvim_conv = s:ywvim_preconv
         endif
     endif
     redraw
@@ -441,7 +450,7 @@ function s:Ywvim_char(key) "{{{
             endif
             let charcomp = <SID>Ywvim_comp(char)
             let charcomplen = len(b:ywvim_complst)
-            if charcomp == [] && s:ywvim_matchexact == 0
+            if charcomp == [] && s:ywvim_matchexact == 0 && s:ywvim_lockb
                 let char = matchstr(char, '.*\ze.')
                 let showchar = matchstr(showchar, '.*\ze.')
                 let charcomp = <SID>Ywvim_comp(char)
