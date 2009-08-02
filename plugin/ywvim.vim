@@ -96,7 +96,7 @@ if exists("g:ywvim_conv")
         let s:ywvim_preconv = g:ywvim_preconv
     endif
 endif
-let s:ywvim_lockb = 0
+let s:ywvim_lockb = 1
 if exists("g:ywvim_lockb")
     let s:ywvim_lockb = g:ywvim_lockb
     unlet g:ywvim_lockb
@@ -450,9 +450,14 @@ function s:Ywvim_char(key) "{{{
             endif
             let charcomp = <SID>Ywvim_comp(char)
             let charcomplen = len(b:ywvim_complst)
-            if charcomp == [] && s:ywvim_matchexact == 0 && s:ywvim_lockb
-                let char = matchstr(char, '.*\ze.')
-                let showchar = matchstr(showchar, '.*\ze.')
+            if charcomp == [] && s:ywvim_matchexact == 0
+                if s:ywvim_lockb
+                    let char = matchstr(char, '.*\ze.')
+                    let showchar = matchstr(showchar, '.*\ze.')
+                elseif !exists("last_available_char")
+                    let last_available_char = matchstr(char, '.*\ze.')
+                    let last_available_showchar = matchstr(showchar, '.*\ze.')
+                endif
                 let charcomp = <SID>Ywvim_comp(char)
             elseif exists("b:ywvim_stra_start") && key =~ s:ywvim_{b:ywvim_active_mb}_endcodes
                     let b:ywvim_stra_end = ''
@@ -492,6 +497,18 @@ function s:Ywvim_char(key) "{{{
                 let b:ywvim_pagenr = b:ywvim_lastpagenr
             endif
             call <SID>Ywvim_echoresult([showchar, '[' . (b:ywvim_pagenr + 1) . ']', b:ywvim_pgbuf[b:ywvim_pagenr]])
+        elseif keycode == 23
+            " <C-w>
+            if exists("last_available_char")
+                let char = last_available_char
+                let showchar = last_available_showchar
+                let charcomp = <SID>Ywvim_comp(last_available_char)
+                unlet last_available_char
+                unlet last_available_showchar
+                call <SID>Ywvim_echoresult([showchar, '[' . (b:ywvim_pagenr + 1) . ']', charcomp])
+            else
+                return <SID>Ywvim_returnchar()
+            endif
         else
             if key =~ s:ywvim_{b:ywvim_active_mb}_inputzh_keys
                 " input Chinese
@@ -524,9 +541,6 @@ function s:Ywvim_char(key) "{{{
                 return <SID>Ywvim_returnchar(showchar) . "\<C-^>"
             elseif keycode == "30"
                 " <C-^>
-                return <SID>Ywvim_returnchar()
-            elseif keycode == 23
-                " <C-w>
                 return <SID>Ywvim_returnchar()
             elseif keycode == expand("\<BS>")
                 " <BS>
