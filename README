@@ -6,7 +6,7 @@ This is a mirror of http://www.vim.org/scripts/script.php?script_id=2662
 如果你是 ywvim 的老用户, 在升级到新版本前, 请注意你的旧版本到新版本间*所有*的发布公告和已知 bugs, 然后查找对应设置的说明, 以免不兼容的改变给你带来不便.
 如果你在使用中发现了问题, 在报告之前, 请先查看下面的"已知问题"部分, 确定是否为已知 bug.
 
-下载最新脚本(1.20): http://www.vim.org/scripts/download_script.php?src_id=11117
+下载最新脚本(1.21): http://www.vim.org/scripts/download_script.php?src_id=18177
 下载最新码表(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 介绍:
@@ -19,47 +19,73 @@ ywvim 是一款不依赖外部输入法的, 在 vim 里输入中文的工具. �
 把下面的几行放到你的 .vimrc 中:
 
 -----
-let g:ywvim_ims=[
-            \['cj', '仓颉', 'cangjie.ywvim'],
-            \['wb', '五笔', 'wubi.ywvim'],
-            \['wb98', '五笔98', 'wubi98.ywvim'],
-            \['zm', '郑码', 'zhengma.ywvim'],
-            \['zy', '注音', 'zhuyin.ywvim'],
-            \['ar30', '行列', 'array30.ywvim'],
-            \['py', '拼音', 'pinyin.ywvim'],
+let g:ywvim_ims=[ 
+            \['wb', '五笔', 'wubi.ywvim'], 
+            \['py', '拼音', 'pinyin.ywvim'], 
+            \['cj', '仓颉', 'cangjie.ywvim'], 
+            \['wb98', '五笔98', 'wubi98.ywvim'], 
+            \['zm', '郑码', 'zhengma.ywvim'], 
+            \['zy', '注音', 'zhuyin.ywvim'], 
+            \['ar30', '行列', 'array30.ywvim'], 
             \]
 
-let g:ywvim_py = { 'helpim':'cj', 'gb':0 }
+let g:ywvim_py = { 'helpim':'wb', 'gb':0 }
 
 let g:ywvim_zhpunc = 1
 let g:ywvim_listmax = 5
 let g:ywvim_esc_autoff = 0
-let g:ywvim_autoinput = 1
-let g:ywvim_pagec = 1
-let g:ywvim_helpim_on = 1
+let g:ywvim_autoinput = 0
+let g:ywvim_circlecandidates = 1
+let g:ywvim_helpim_on = 0
 let g:ywvim_matchexact = 0
 let g:ywvim_chinesecode = 1
 let g:ywvim_gb = 0
 let g:ywvim_preconv = 'g2b'
 let g:ywvim_conv = ''
-let g:ywvim_lockb = 0
+let g:ywvim_lockb = 1
 -----
 
-解释:
+使用:
+=====
+<Ctrl-\>, <Ctrl-Shift-Space> 输入法开关.
+
+;(分号) 临时英文.
+
+z 临时拼音.
+
+<Ctrl-^> 设置输入法:
+    码表切换.
+    中英标点切换.
+    最大词长: 你想输入的最长的词. 设为 1 为单字模试.
+    简繁转换开关.
+    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
+    反查码表开关.
+
+,.-=    上下翻页.
+
+空格或数字选字, 回车输英文.
+; 分号选择第二候选词. (感谢在 www.newsmth.net 的 vace 的建议.)
+
+注音用户注意!!!:
+两次空格为翻页.
+回车为输入默认汉字.
+默认没有绑任何键到临英和临拼(你可以更改).
+
+详情:
+=====
 
 所有变量中, 只有 g:ywvim_ims 是必须要设置的.
 
 1. g:ywvim_ims 是注册你的输入法的变量, 格式为:
 
       \['输入法的拼音简称', '输入法的中文名称', '码表文件']
-
             
-比如 \['cj', '仓颉', 'cangjie.ywvim'], 可以读为: 仓颉输入法, 简称为 cj, 码表文件为 cangjie.ywvim.
+比如 \['wb', '五笔', 'wubi.ywvim'], 可以读为: 五笔输入法, 简称为 wb, 码表文件为 wubi.ywvim.
 ywvim 会自动扫描 ywvim.vim 的同一目录及其子目录, 如果有同名文件, 以第一个优先.
 第一行的为默认输入法.
 你可以把你不需要的输入法的行删去.
 
-2. let g:ywvim_py = { 'helpim':'cj', 'gb':0 }
+2. let g:ywvim_py = { 'helpim':'wb', 'gb':0 }
 
 单独设置每个码表的参数, 码表级别优先于全局级别. 码表级别的参数设置格式是:
  
@@ -67,7 +93,7 @@ ywvim 会自动扫描 ywvim.vim 的同一目录及其子目录, 如果有同名�
 
 目前有这几个参数支持局部设置:
 listmax: 候选框数目.
-maxelement: 最大词长.
+maxphraselength: 最大词长.
 helpim: 反查码表的简称.
 zhpunc: 中文标点开关.
 matchexact: 精确匹配开关.
@@ -75,9 +101,9 @@ gb: 只输入 gb2312 范围汉字.
  
 比如你可以这样设:
 
-    let g:ywvim_zy = {'listmax':6, 'maxelement':1, 'gb':0}
+    let g:ywvim_zy = {'listmax':6, 'maxphraselength':1, 'gb':0}
 
-意思是, 对于注音(zy)输入法, 候选框个数(listmax)为 6, 最大词长(maxelement)为 1, 只输入在 gb2312 范围的汉字('gb':0).
+意思是, 对于注音(zy)输入法, 候选框个数(listmax)为 6, 最大词长(maxphraselength)为 1, 只输入在 gb2312 范围的汉字('gb':0).
 
 你也可以全局设置某个变量, 格式是 let g:ywvim_listmax = 5, 这样就不用为每个码表都设相同的设置了. 下面都是全局变量.
 
@@ -91,7 +117,7 @@ gb: 只输入 gb2312 范围汉字.
 6. let g:ywvim_autoinput = 1: 支持两种程度的自动模式. 设为 2 为重度自动, 任何单码字都自动上屏. 2 为中度自动, 只在翻页时出现的单码字才上屏.
 (感谢在 #arch-cn@irc.oftc.net 上的 medicalwei 提供的建议)
 
-7. let g:ywvim_pagec = 1: 设为 1 表示可以在候选页中循环翻页.
+7. let g:ywvim_circlecandidates = 1: 设为 1 表示可以在候选页中循环翻页.
 (感谢在 #arch-cn@irc.oftc.net 上的 medicalwei 提供的建议)
 
 8. let g:ywvim_helpim_on = 0: 设为 1 表示打开反查码表的功能.
@@ -115,42 +141,13 @@ gb: 只输入 gb2312 范围汉字.
 
 14. let g:ywvim_lockb = 0, 为 0 时, 在空码是不锁定键盘.
 
-使用:
-=====
-<C-\> 输入法开关.
-
-;(分号) 临时英文.
-
-z 临时拼音.
-
-<C-^> 设置输入法:
-    码表切换.
-    中英标点切换.
-    最大词长: 你想输入的最长的词. 设为 1 为单字模试.
-    简繁转换开关.
-    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
-    反查码表开关.
-
-,.-=    上下翻页.
-
-空格或数字选字, 回车输英文.
-; 分号选择第二候选词. (感谢在 www.newsmth.net 的 vace 的建议.)
-
-注音用户注意!!!:
-两次空格为翻页.
-回车为输入默认汉字.
-默认没有绑任何键到临英和临拼(你可以更改).
-
 已知问题:
 =========
-1. 如果当前 buffer 的 ywvim 状态为开, 新开一个 buffer 后会显示 ywvim 为开启状态, 但实际不是, 此时只需按两次 <C-\> 关闭和打开 ywvim 即可. 原因不明.
-临时解决方法: 开启 g:ywvim_esc_autoff: let g:ywvim_esc_autoff = 1, 保证在退出插入模式后自动退出 ywvim.
+1. 如果当前 buffer 的 ywvim 状态为开, 新开一个 buffer 后会显示 ywvim 为开启状态, 但实际不是. 原因不明.
 
-2. 反查码表在非 utf-8 encoding 时工作无法正常工作. 临时解决方案: 在码表的主部分的每行最后加一个空格(官方的码表已经这样处理过了).
+2. 反查码表对于大码表反应速度过慢. 临时解决方案, 换词汇量较小的码表或者把 listmax 设小一点.
 
-3. 反查码表对于大码表反应速度过慢. 临时解决方案, 换词汇量较小的码表或者把 listmax 设小一点.
-
-4. enmode 和可变中文标点的冲突.
+3. enmode 和可变中文标点的冲突.
 当绑定 enmode 到可变中文标点如 " 和 ' 时, 工作不正常. enmode 需要一个新的机制.
 
 回馈:
@@ -159,12 +156,6 @@ z 临时拼音.
 
 待做:
 ============
-
-常见问题:
-============
-Q: 增加模糊查找? 增加自动调频?
-A: 对于像作者一样的单字形码用户, 模糊查找是完全用不到的功能, 所以没有兴趣也没有时间开发. 如果你希望有该特性, 请发补丁给我.
-而自动调频对于形码来说, 简直就是灾难, 但对音码来说可能很有用. 如果你觉得有用, 你也可以发补丁给我. 谢谢.
 
 码表格式:
 =========
@@ -187,18 +178,24 @@ InputZhSecKeys=; <= 输入第二重码键.
 EndCodes=  <= 结束字码的键位.
 InputZhKeys=  <= 输入中文的按键
 InputEnKeys=  <= 输入英文的按键
-PageUpExtraKeys= <= 额外上翻页键
-PageDnExtraKeys= <= 额外下翻页键
+AltPageUpKeys= <= 其他上翻页键
+AltPageDnkeys= <= 其他下翻页键
 
 [CharDefinition]
 a 日  <== 中文字母的定义在这里定义. 如果没有, 留空即可.
 
 [Punctuation]
 { 『
-" “ ”
+"  
 
 [Main]
-a 日 曰 <== 由字码和汉字组成一行. 如果想让反查码表在非 utf-8 下也能工作, 请在最后面加一个空格, 具体原因不明, 哪位帮我修复呢?
+a 日 曰 <== 由字码和汉字组成一行.
+
+常见问题:
+============
+Q: 增加模糊查找? 增加自动调频?
+A: 对于像作者一样的单字形码用户, 模糊查找是完全用不到的功能, 所以没有兴趣也没有时间开发. 如果你希望有该特性, 请发补丁给我.
+而自动调频对于形码来说, 简直就是灾难, 但对音码来说可能很有用. 如果你觉得有用, 你也可以发补丁给我. 谢谢.
 
 ======= English version =======
 =======
@@ -207,7 +204,7 @@ NOTE!!!
 If you are a ywvim's old user, before upgrade to the latest version, please have a look at *all* of the release notes and known bugs then look for the more details about the corresponding part of them in the description, because maybe some imcompatible changes have been made between your old version and the latest one.
 If you find a bug when using, please look at the "known bugs" section to make sure whether it's a know bug before you report.
 
-Download the lastest script(1.20): http://www.vim.org/scripts/download_script.php?src_id=11117
+Download the lastest script(1.21): http://www.vim.org/scripts/download_script.php?src_id=18177
 Download the lastest mabiao(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 Introduce:
@@ -220,21 +217,22 @@ settings in .vimrc:
 put some lines like the following into your ~/.vimrc:
 
 -----
-let g:ywvim_ims=[
-            \['cj', '仓颉', 'cangjie.ywvim'],
-            \['wb', '五笔', 'wubi.ywvim'],
-            \['wb98', '五笔98', 'wubi98.ywvim'],
-            \['zm', '郑码', 'zhengma.ywvim'],
-            \['zy', '注音', 'zhuyin.ywvim'],
-            \['ar30', '行列', 'array30.ywvim'],
-            \['py', '拼音', 'pinyin.ywvim'],
+let g:ywvim_ims=[ 
+            \['wb', '五笔', 'wubi.ywvim'], 
+            \['py', '拼音', 'pinyin.ywvim'], 
+            \['cj', '仓颉', 'cangjie.ywvim'], 
+            \['wb98', '五笔98', 'wubi98.ywvim'], 
+            \['zm', '郑码', 'zhengma.ywvim'], 
+            \['zy', '注音', 'zhuyin.ywvim'], 
+            \['ar30', '行列', 'array30.ywvim'], 
             \]
-let g:ywvim_py = { 'helpim':'cj', 'gb':0 }
+
+let g:ywvim_py = { 'helpim':'wb', 'gb':0 }
 let g:ywvim_zhpunc = 1
 let g:ywvim_listmax = 5
 let g:ywvim_esc_autoff = 0
 let g:ywvim_autoinput = 1
-let g:ywvim_pagec = 1
+let g:ywvim_circlecandidates = 1
 let g:ywvim_helpim_on = 0
 let g:ywvim_matchexact = 0
 let g:ywvim_chinesecode = 1
@@ -244,7 +242,34 @@ let g:ywvim_conv = ''
 let g:ywvim_lockb = 0
 -----
 
-Explanation:
+Usage:
+======
+<Ctrl-\>, <Ctrl-Shift-Space>    Toggle ywvim between on and off.
+
+;(semicolon) occasional English key.
+
+z           occasional English key.
+
+<Ctrl-^> setup ywvim:
+    码表切换.
+    中英标点切换.
+    最大词长: 你想输入的最长的词. 设为 1 为单字模试.
+    简繁转换开关.
+    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
+    反查码表开关.
+
+,.-=        Pageup/pagedown.
+
+space or num key for input Chinese, Enter inputs English.
+; Select the second candiate. Thanks for vace on www.newsmth.net's suggestion.)
+
+NOTE for zhuyin users!!!:
+two continual space is pagedown.
+Enter is to select the defaut Chinese charator.
+English key and Pinyin key don't be bond to any keys by default(you can configure it).
+
+Details:
+============
 
 g:ywvim_ims is a must-have variable among so many options.
 
@@ -252,12 +277,12 @@ g:ywvim_ims is a must-have variable among so many options.
 
       \['English_abbreviation_for_IM', 'Chinese_name_of_IM', 'mabiao_file']
 
-For example, \['cj', '仓颉', 'cangjie.ywvim'], can be described as: cangjie input method, English abbreviation is cj, mabiao file is pinyin.ywvim.
+For example, \['wb', '五笔', 'wubi.ywvim'], can be described as: wubi input method, English abbreviation is wb, mabiao file is wubi.ywvim.
 ywvim will try to search the dir and subdirs under it, and use the first one if there are files shared with the same name..
 the first one is the defaut one.
 You can delete the lines of IM that you don't need at all.
 
-2. let g:ywvim_py = { 'helpim':'cj', 'gb':0 }
+2. let g:ywvim_py = { 'helpim':'wb', 'gb':0 }
 
 You can setup a parameter which only has effect on a particular IM, IM's has higher priority on global's. Its format is:
  
@@ -265,7 +290,7 @@ You can setup a parameter which only has effect on a particular IM, IM's has hig
 
 These parameters support local effect:
 listmax: candidates max number.
-maxelement: max length of phrase.
+maxphraselength: max length of phrase.
 helpim: help IM's English abbreviation.
 zhpunc: Input Chinese punctuations.
 matchexact: show only the exact matched.
@@ -273,9 +298,9 @@ gb: set it to 1 means only input Chinese in gb2312.
  
 For instance you can setup like this:
 
-    let g:ywvim_zy = {'listmax':6, 'maxelement':1, 'gb':0}
+    let g:ywvim_zy = {'listmax':6, 'maxphraselength':1, 'gb':0}
 
-it means, for zhuyin(zy) IM, candidates max rumber(maxlist) is 6, max phrase(maxelement) is 1, only input Chinese in gb2312('gb':0).
+it means, for zhuyin(zy) IM, candidates max rumber(maxlist) is 6, max phrase(maxphraselength) is 1, only input Chinese in gb2312('gb':0).
 
 You also can setup a parameter globally, format is let g:ywvim_listmax = 5, so you can setup a parameter easily for every IM.
 
@@ -289,7 +314,7 @@ You also can setup a parameter globally, format is let g:ywvim_listmax = 5, so y
 6. let g:ywvim_autoinput = 1:  supports two extends of auto input, set it to 2 is high auto, every singe candiate is auto inputted, 1 is media auto, just auto input when pageup/down.
 (Thanks for medicalwei on #arch-cn@irc.oftc.net's suggestion.)
 
-7. let g:ywvim_pagec = 1: set to 1 means circle pages when reaching the end.
+7. let g:ywvim_circlecandidates = 1: set to 1 means circle pages when reaching the end.
 (Thanks for medicalwei on #arch-cn@irc.oftc.net's suggestion.)
 
 8. let g:ywvim_helpim_on = 0: set it to 1 means support of help mabiao.
@@ -311,42 +336,13 @@ You also can setup a parameter globally, format is let g:ywvim_listmax = 5, so y
 
 14. let g:ywvim_lockb = 0, 0 means not to lock up the keyboard when there's no charactor matched with.
 
-Usage:
-======
-<C-\>       Toggle ywvim between on and off.
-
-;(semicolon) occasional English key.
-
-z           occasional English key.
-
-<C-^> setup ywvim:
-    码表切换.
-    中英标点切换.
-    最大词长: 你想输入的最长的词. 设为 1 为单字模试.
-    简繁转换开关.
-    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
-    反查码表开关.
-
-,.-=        Pageup/pagedown.
-
-space or num key for input Chinese, Enter inputs English.
-; Select the second candiate. Thanks for vace on www.newsmth.net's suggestion.)
-
-NOTE for zhuyin users!!!:
-two continual space is pagedown.
-Enter is to select the defaut Chinese charator.
-English key and Pinyin key don't be bond to any keys by default(you can configure it).
-
 Known Bugs:
 ===========
-1. If ywvim is on in current buffer, and if you edit a new buffer, the status of ywvim seems to be on, but it isn't actual, you need to hit two <C-\>s to toggle ywvim off and on to make it work again. I have no idea why it happens.
-Workaround: switch on g:ywvim_esc_autoff: let g:ywvim_esc_autoff = 1, to make sure quit ywvim after escape from insert mode always.
+1. If ywvim is on in current buffer, and if you edit a new buffer, the status of ywvim seems to be on, but it isn't actually.
 
-2. help mabiao can't work correctly on non-utf-8 encoding. Workaround: append an extra space at every line in the main part of mabiao file(Offical mabiao has done it.)
+2. Slow issue on big help mabiao. Workaround: use a relative small mabiao, or set the listmax to a smaller value.
 
-3. Slow issue on big help mabiao. Workaround: use a relative small mabiao, or set the listmax to a smaller value.
-
-4. enmode conflicts with paticular Chinese punctuations.
+3. enmode conflicts with paticular Chinese punctuations.
 Such as " and '. Enmode needs a new mechanism to implement.
 
 Feedback:
@@ -384,18 +380,15 @@ Following is for ZhuYin alike IM, other IM don't need to set them at all.
 EndCodes=  <= Why keys mean input Chinese has ended.
 InputZhKeys=  <= Input Chinese's key.
 InputEnKeys=  <= Input English's key.
-PageUpExtraKeys= <= Extra keys for pageup.
-PageDnExtraKeys= <= Extra keys for pagedown.
+AltPageUpKeys= <= Alternative keys for pageup.
+AltPageDnKeys= <= Alternative keys for pagedown.
 
 [CharDefinition]
 a 日  <== Definition of Chinese alphabets. If hasn't, leave it blank.
 
 [Punctuation]
 { 『
-" “ ”
+"  
 
 [Main]
-a 日 曰 <== Char code and Chinese Charactors. Leave a space at the end of a line
-if help mabiao can't work correctly when on utf-8's encoding. I don't know the
-reason, could someone help me for fixing it please?
-
+a 日 曰 <== Char code and Chinese Charactors.
