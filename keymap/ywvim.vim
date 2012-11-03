@@ -1,7 +1,7 @@
 " mY oWn VimIM.
 " Author: Wu, Yue <ywupub@gmail.com>
-" Last Change:	2012 Jun 21
-" Release Version: 1.21
+" Last Change:	2012-11-03
+" Release Version: 1.22
 " License: BSD
 
 " ~/projects/vimscript/ywvim/changelog
@@ -21,6 +21,7 @@ function s:Ywvim_SetVar(var, val) " Assign user var to script var{{{
     endif
 endfunction "}}}
 
+let s:ywvim_ims_encoding='utf-8'
 function s:Ywvim_loadvar() " Load global user vars.{{{
     let s:ywvim_ims = []
     if exists("g:ywvim_ims")
@@ -84,16 +85,20 @@ function s:Ywvim_loadmb(...) "{{{
     else
         let mbintername = s:ywvim_ims[0][0]
     endif
-    if !exists("s:ywvim_{mbintername}_mb_encoded")
-        let s:ywvim_{mbintername}_mb_encoded = 'utf-8'
+    if !exists("s:ywvim_{mbintername}_mb_encoding")
+        let s:ywvim_{mbintername}_mb_encoding = 'utf-8'
     endif
     let b:ywvim_parameters["active_mb"] = mbintername
-    if !exists("s:ywvim_{mbintername}_loaded") || (s:ywvim_{mbintername}_mb_encoded != &encoding)
+    if !exists("s:ywvim_{mbintername}_loaded")
         let s:ywvim_{mbintername}_mbdb = filter(readfile(s:ywvim_{mbintername}_mbfile), "v:val !~ '^\s*$'")
-        if (s:ywvim_{mbintername}_mb_encoded != &encoding) && has("iconv")
-            call map(s:ywvim_{mbintername}_mbdb, 'iconv(v:val, s:ywvim_{mbintername}_mb_encoded, &encoding)')
-            let s:ywvim_{mbintername}_mb_encoded = &encoding
-        endif
+        let loadmb = 1
+    endif
+    if s:ywvim_{mbintername}_mb_encoding != &encoding
+        call map(s:ywvim_{mbintername}_mbdb, 'iconv(v:val, s:ywvim_{mbintername}_mb_encoding, &encoding)')
+        let s:ywvim_{mbintername}_mb_encoding = &encoding
+        let loadmb = 1
+    endif
+    if exists("loadmb")
         let s:ywvim_{mbintername}_desc_idxs = match(s:ywvim_{mbintername}_mbdb, '^\[Description]') + 1
         let s:ywvim_{mbintername}_desc_idxe = match(s:ywvim_{mbintername}_mbdb, '^\[[^]]\+]', s:ywvim_{mbintername}_desc_idxs) - 1
         let s:ywvim_{mbintername}_chardef_idxs = match(s:ywvim_{mbintername}_mbdb, '^\[CharDefinition]') + 1
@@ -172,7 +177,7 @@ function s:Ywvim_SetMbVar(m, n, v) "{{{
 endfunction "}}}
 function s:YwvimLoadConvertList() "{{{
     if !exists("s:ywvim_clst")
-        let s:ywvim_g2b_mb_encoded = 'utf-8'
+        let s:ywvim_g2b_mb_encoding = 'utf-8'
         let s:ywvim_clst = []
         let clstfile = matchstr(globpath(s:ywvim_path, '/**/g2b.ywvim'), "[^\n]*")
         if filereadable(clstfile)
@@ -180,21 +185,23 @@ function s:YwvimLoadConvertList() "{{{
             let s:ywvim_clst_sep = index(s:ywvim_clst, '') + 1
         endif
     endif
-    if s:ywvim_g2b_mb_encoded != &encoding
-        call map(s:ywvim_clst, 'iconv(v:val, s:ywvim_g2b_mb_encoded, &encoding)')
+    if s:ywvim_g2b_mb_encoding != &encoding
+        call map(s:ywvim_clst, 'iconv(v:val, s:ywvim_g2b_mb_encoding, &encoding)')
+        let s:ywvim_g2b_mb_encoding = &encoding
     endif
 endfunction "}}}
 function s:YwvimLoadGBList() "{{{
     if !exists("s:ywvim_gbfilterlist")
-        let s:ywvim_gbfilter_mb_encoded = 'utf-8'
+        let s:ywvim_gbfilter_mb_encoding = 'utf-8'
         let s:ywvim_gbfilterlist = []
         let gblstfile = matchstr(globpath(s:ywvim_path, '/**/gb2312.ywvim'), "[^\n]*")
         if filereadable(gblstfile)
             let s:ywvim_gbfilterlist = readfile(gblstfile)
         endif
     endif
-    if s:ywvim_gbfilter_mb_encoded != &encoding
-        call map(s:ywvim_gbfilterlist, 'iconv(v:val, s:ywvim_gbfilter_mb_encoded, &encoding)')
+    if s:ywvim_gbfilter_mb_encoding != &encoding
+        call map(s:ywvim_gbfilterlist, 'iconv(v:val, s:ywvim_gbfilter_mb_encoding, &encoding)')
+        let s:ywvim_gbfilter_mb_encoding = &encoding
     endif
 endfunction "}}}
 function s:YwvimHighlight() "{{{
@@ -209,10 +216,16 @@ function s:YwvimHighlight() "{{{
     endif
 endfunction "}}}
 
-function s:Ywvim_keymap_punc() "{{{
-    for p in keys(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic)
-        execute 'lnoremap <buffer> <expr> '.escape(p, '\|')." <SID>Ywvim_puncp(".string(escape(p, '\|')).")"
-    endfor
+function s:Ywvim_keymap_punc(t) "{{{
+    if a:t == 1
+        for p in keys(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic)
+            execute 'lnoremap <buffer> <expr> '.escape(p, '\|')." <SID>Ywvim_puncp(".string(escape(p, '\|')).")"
+        endfor
+    elseif a:t == 0
+        for p in keys(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic)
+            execute 'lunmap <buffer> ' . escape(p, '\|')
+        endfor
+    endif
 endfunction "}}}
 
 function s:Ywvim_puncp(p) "{{{
@@ -232,45 +245,55 @@ function s:Ywvim_puncp(p) "{{{
     endif
 endfunction "}}}
 
-function s:Ywvim_keymap() "{{{
-    for key in sort(split(s:ywvim_{b:ywvim_parameters["active_mb"]}_usedcodes,'\zs'))
-        execute 'lnoremap <buffer> <expr> '.escape(key, '\|').'  <SID>Ywvim_char("'.key.'")'
-    endfor
-    if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc == 1
-        call <SID>Ywvim_keymap_punc()
+function s:Ywvim_keymap(m) "{{{
+    if (a:m == 'a') || (a:m == 'k')
+        for key in sort(split(s:ywvim_{b:ywvim_parameters["active_mb"]}_usedcodes,'\zs'))
+            execute 'lnoremap <buffer> <expr> '.escape(key, '\|').'  <SID>Ywvim_char("'.key.'")'
+        endfor
     endif
-    if s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar != ''
-        execute 'lnoremap <buffer> <expr> '.s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar.' <SID>Ywvim_enmode()'
+    if (a:m == 'a') || (a:m == 'p')
+        if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc == 1
+            call <SID>Ywvim_keymap_punc(1)
+        endif
     endif
-    if s:ywvim_{b:ywvim_parameters["active_mb"]}_pychar != ''
-        execute 'lnoremap <buffer> <expr> '.s:ywvim_{b:ywvim_parameters["active_mb"]}_pychar.' <SID>Ywvim_onepinyin()'
+    if (a:m == 'a') || (a:m == 'e')
+        if s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar != ''
+            execute 'lnoremap <buffer> <expr> '.s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar.' <SID>Ywvim_enmode()'
+        endif
     endif
-    lnoremap <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_UIsetting(1)<CR>
-    if s:ywvim_esc_autoff
-        inoremap <buffer> <esc> <C-R>=Ywvim_toggle()<CR><C-R>=Ywvim_toggle_post()<CR><ESC>
+    if (a:m == 'a') || (a:m == 'y')
+        if s:ywvim_{b:ywvim_parameters["active_mb"]}_pychar != ''
+            execute 'lnoremap <buffer> <expr> '.escape(s:ywvim_{b:ywvim_parameters["active_mb"]}_pychar, '\').' <SID>Ywvim_onepinyin()'
+        endif
+    endif
+    if (a:m == 'a')
+        lnoremap <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_UIsetting(1)<CR>
+        if s:ywvim_esc_autoff
+            inoremap <buffer> <esc> <C-R>=Ywvim_toggle()<CR><C-R>=Ywvim_toggle_post()<CR><ESC>
+        endif
     endif
     return ''
 endfunction "}}}
 
 function s:Ywvim_UIsetting(m) "{{{
-    let punc='。'
+    let punc='zh'
     if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc == 0
-        let punc='.'
+        let punc='en'
     endif
     let pars = ''
-    echohl Pmenu | redraw | echon "ywvim 参数设置[当前状态]\n"
-    echohl Title | echon "(m)码表切换[" . s:ywvim_{b:ywvim_parameters["active_mb"]}_name . "]\n"
+    echohl Pmenu | redraw | echon "ywvim preferences [current value]\n"
+    echohl Title | echon "(m) mb switch [" . s:ywvim_{b:ywvim_parameters["active_mb"]}_name . "]\n"
     let pars .= 'm'
-    echon "(.)中英标点切换[" . punc . "]\n"
+    echon "(.) zh/en punctuation [" . punc . "]\n"
     let pars .= '.'
-    echon "(p)最大词长[" . s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength . "]\n"
+    echon "(p) Max phrase length [" . s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength . "]\n"
     let pars .= 'p'
-    echon "(g)b2312开关[" . s:ywvim_{b:ywvim_parameters["active_mb"]}_gb . "]\n"
+    echon "(g) gb2312 [" . s:ywvim_{b:ywvim_parameters["active_mb"]}_gb . "]\n"
     let pars .= 'g'
-    echon "(c)简繁转换开关[" . s:ywvim_conv . "]\n"
+    echon "(c) simplified <-> traditional [" . s:ywvim_conv . "]\n"
     let pars .= 'c'
     if exists('s:ywvim_{b:ywvim_parameters["active_mb"]}_helpmb')
-        echon "(h)反查码表开关[" . s:ywvim_{b:ywvim_parameters["active_mb"]}_helpim_on . "]\n"
+        echon "(h) help im [" . s:ywvim_{b:ywvim_parameters["active_mb"]}_helpim_on . "]\n"
         let pars .= 'h'
     endif
     echohl None
@@ -280,13 +303,17 @@ function s:Ywvim_UIsetting(m) "{{{
     endwhile
     redraw
     if par == 'm'
-        echon "码表切换:\n"
+        echon "mb switch:\n"
         let nr = 0
         for im in s:ywvim_ims
             let nr += 1
             echohl Number | echon nr
+            if s:ywvim_ims_encoding != &encoding
+                let im[1] = iconv(im[1], s:ywvim_ims_encoding, &encoding)
+            endif
             echohl None | echon '. ' . im[1] . " "
         endfor
+        let s:ywvim_ims_encoding = &encoding
         let getnr = ''
         while getnr !~ '[' . join(range(1, nr), '') . ']'
             let getnr = nr2char(getchar())
@@ -294,21 +321,18 @@ function s:Ywvim_UIsetting(m) "{{{
         lmapclear <buffer>
         let b:ywvim_parameters["active_mb"] = s:ywvim_ims[getnr - 1][0]
         call <SID>Ywvim_loadmb()
-        call <SID>Ywvim_keymap()
+        call <SID>Ywvim_keymap('a')
     elseif par == '.'
         if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc == 0
-            call <SID>Ywvim_keymap_punc()
+            call <SID>Ywvim_keymap_punc(1)
         else
-            for p in keys(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic)
-                execute 'lunmap <buffer> ' . escape(p, '\|')
-            endfor
+            call <SID>Ywvim_keymap_punc(0)
         endif
-        if s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar != ''
-            execute 'lnoremap <buffer> <expr> ' . s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar . ' <SID>Ywvim_enmode()'
-        endif
+        call <SID>Ywvim_keymap('e')
+        call <SID>Ywvim_keymap('y')
         let s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc = 1 - s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc
     elseif par == 'p'
-        let s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength = input('最大词长: ', s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength)
+        let s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength = input('Max phrase length: ', s:ywvim_{b:ywvim_parameters["active_mb"]}_maxphraselength)
     elseif par == 'g'
         let s:ywvim_{b:ywvim_parameters["active_mb"]}_gb = 1 - s:ywvim_{b:ywvim_parameters["active_mb"]}_gb
         if s:ywvim_{b:ywvim_parameters["active_mb"]}_gb
@@ -316,6 +340,11 @@ function s:Ywvim_UIsetting(m) "{{{
         endif
     elseif par == 'h'
         let s:ywvim_{b:ywvim_parameters["active_mb"]}_helpim_on = 1 - s:ywvim_{b:ywvim_parameters["active_mb"]}_helpim_on
+        let helpmb = s:ywvim_{b:ywvim_parameters["active_mb"]}['helpim']
+        if !exists("s:ywvim_{helpmb}_mbdb")
+            call <SID>Ywvim_loadmb(helpmb)
+        endif
+        let s:ywvim_{b:ywvim_parameters["active_mb"]}_helpmb = helpmb
     elseif par == 'c'
         if s:ywvim_conv != ''
             let s:oldywvim_conv = s:ywvim_conv
@@ -337,7 +366,138 @@ function s:Ywvim_UIsetting(m) "{{{
     return ""
 endfunction "}}}
 
-" TODO @na
+function s:Ywvim_char(key) "{{{ 输入中文的主要模块
+		if !exists("b:ywuvim_char")
+				let b:ywuvim_char = ''
+				let b:ywuvim_showchar = ''
+				let b:ywuvim_candidatelist = []
+		endif
+		let keycode = char2nr(a:key)
+		while 1 " enter ywvim mode 进入中文模式
+				let key = nr2char(keycode)
+				let keypat = '\V'.escape(key, '\')
+                " 0 键取消中文输入 Thanks 蒋国华20121030 15805165530 <jghua@139.com>
+                if keycode == char2nr("0")
+                    " if keycode == char2nr("\<C-w>")
+                    return <SID>Ywvim_ReturnChar()
+                elseif keycode == "\<BS>"
+						let pgnr = 1
+						let b:ywuvim_char = matchstr(b:ywuvim_char, '.*\ze.')
+						let b:ywuvim_showchar = matchstr(b:ywuvim_showchar, '.*\ze.')
+						if b:ywuvim_char != ''
+								let b:ywuvim_candidatelist = <SID>Ywvim_comp(b:ywuvim_char)
+								call <SID>Ywvim_echofinalresult([b:ywuvim_showchar, '[' . (s:ywvim_pagenr + 1) . ']', b:ywuvim_candidatelist])
+						else
+								return <SID>Ywvim_ReturnChar()
+						endif
+				" {{{ 测试是否是有效的码表可用字母，如果是，则开始查询对应汉字
+				elseif (key != '') && (match(s:ywvim_{b:ywvim_parameters["active_mb"]}_usedcodes, keypat) != -1)
+						let pgnr = 1
+						if key != ' '
+								let b:ywuvim_char .= key
+								if s:ywvim_chinesecode && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_chardefs, key)
+										let showkey = s:ywvim_{b:ywvim_parameters["active_mb"]}_chardefs[key]
+								else
+										let showkey = key
+								endif
+								let b:ywuvim_showchar .= showkey
+						endif
+						let b:ywuvim_candidatelist = <SID>Ywvim_comp(b:ywuvim_char)
+						let charcomplen = len(s:ywvim_complst)
+						if (charcomplen == 0) && (s:ywvim_matchexact == 0)
+								if s:ywvim_lockb
+										let b:ywuvim_char = matchstr(b:ywuvim_char, '.*\ze.')
+										let b:ywuvim_showchar = matchstr(b:ywuvim_showchar, '.*\ze.')
+										let b:ywuvim_candidatelist = <SID>Ywvim_comp(b:ywuvim_char)
+								elseif !exists("b:ywuvim_lock_char") " FIXME 0: 输出首选字，然后继续输入中文。
+										let old_ywuvim_char = matchstr(b:ywuvim_char, '.*\ze.')
+										let b:ywuvim_lock_char = <SID>Ywvim_comp(old_ywuvim_char)[0]["word"]
+										let b:ywuvim_char = b:ywuvim_lock_char.key
+										let b:ywuvim_showchar = b:ywuvim_lock_char.showkey
+										"     return <SID>Ywvim_ReturnChar(0) . <SID>Ywvim_char(key)
+								endif
+						endif
+						if (s:ywvim_autoinput == 2) && (len(s:ywvim_pgbuf[s:ywvim_pagenr]) == 1)
+								return <SID>Ywvim_ReturnChar(0)
+						endif
+						call <SID>Ywvim_echofinalresult([b:ywuvim_showchar, '[' . (s:ywvim_pagenr + 1) . ']', b:ywuvim_candidatelist])
+                " }}}
+                " {{{ 翻下页
+				elseif (key != '') && (s:ywvim_{b:ywvim_parameters["active_mb"]}_pagednkeys =~ keypat)
+						let s:ywvim_pagenr += 1
+						if !has_key(s:ywvim_pgbuf, s:ywvim_pagenr)
+								let page = <SID>Ywvim_comp(b:ywuvim_char,s:ywvim_zhcode_startidx,s:ywvim_continue_idx)
+								if page != []
+										if s:ywvim_lastpagenr <= s:ywvim_pagenr
+												let s:ywvim_lastpagenr = s:ywvim_pagenr
+										endif
+										let s:ywvim_pgbuf[s:ywvim_pagenr] = page
+								else
+										if s:ywvim_circlecandidates
+												let s:ywvim_pagenr = 0
+										else
+												let s:ywvim_pagenr -= 1
+										endif
+								endif
+						endif
+						call <SID>Ywvim_echofinalresult([b:ywuvim_showchar, '[' . (s:ywvim_pagenr + 1) . ']', s:ywvim_pgbuf[s:ywvim_pagenr]])
+						if s:ywvim_autoinput && (len(s:ywvim_pgbuf[s:ywvim_pagenr]) == 1)
+								return <SID>Ywvim_ReturnChar(0)
+						endif
+                " }}}
+                " {{{ 翻上页
+				elseif (key != '') && (s:ywvim_{b:ywvim_parameters["active_mb"]}_pageupkeys =~ keypat) " PageUp
+						if s:ywvim_pagenr > 0
+								let s:ywvim_pagenr -= 1
+						elseif s:ywvim_circlecandidates
+								let s:ywvim_pagenr = s:ywvim_lastpagenr
+						endif
+						call <SID>Ywvim_echofinalresult([b:ywuvim_showchar, '[' . (s:ywvim_pagenr + 1) . ']', s:ywvim_pgbuf[s:ywvim_pagenr]])
+				elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_inputzh_keys =~ keypat " input Chinese
+						if s:ywvim_pgbuf[s:ywvim_pagenr] != []
+								return <SID>Ywvim_ReturnChar(0)
+						elseif s:ywvim_lockb == 0
+								return <SID>Ywvim_ReturnChar(b:ywuvim_showchar)
+						else
+								return <SID>Ywvim_ReturnChar()
+						endif
+                " }}}
+                " {{{ 输入第二候选词
+				elseif '['.s:ywvim_{b:ywvim_parameters["active_mb"]}_inputzh_secondkeys.']' =~ keypat
+						if s:ywvim_pgbuf[s:ywvim_pagenr] != []
+								let secondcharidx = 0
+								if len(s:ywvim_pgbuf[s:ywvim_pagenr][0]) > 1
+										let secondcharidx = 1
+								endif
+								return <SID>Ywvim_ReturnChar(secondcharidx)
+						endif
+						return <SID>Ywvim_ReturnChar()
+                " }}}
+                " {{{ 数字键选候选词
+				elseif key =~ '[1-' . s:ywvim_{b:ywvim_parameters["active_mb"]}_listmax . ']' " number selection
+						if key <= len(s:ywvim_pgbuf[s:ywvim_pagenr])
+								return <SID>Ywvim_ReturnChar(key - 1)
+						else
+								call <SID>Ywvim_echofinalresult([b:ywuvim_showchar, '[' . (s:ywvim_pagenr + 1) . ']', b:ywuvim_candidatelist])
+						endif
+                " }}}
+				elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_inputen_keys =~ keypat " input English
+						return <SID>Ywvim_ReturnChar(b:ywuvim_char)
+				elseif keycode == char2nr("\<C-^>")
+						return <SID>Ywvim_ReturnChar(0).<SID>Ywvim_UIsetting(0)
+				elseif keycode == char2nr("\<C-\>")
+						return <SID>Ywvim_ReturnChar(b:ywuvim_showchar)."\<C-^>"
+				elseif s:ywvim_pgbuf[s:ywvim_pagenr] != []
+						if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic, key)
+								let key = <SID>Ywvim_puncp(key)
+						endif
+						return <SID>Ywvim_ReturnChar(0) . key
+				endif
+				let keycode = getchar()
+		endwhile
+		return ''
+endfunction "}}}
+
 function s:Ywvim_comp(zhcode,...) "{{{
     " a:1: startline. a:2: endidx.
     if a:zhcode == ''
@@ -439,10 +599,17 @@ function s:Ywvim_echofinalresult(list) "{{{
         let ywvimbar .= ' ' . c.nr . ':' . c.word . c.suf . c.help
     endfor
     " Try to prevent hit-enter-prompt.
-    let cmdheight = ((strlen(ywvimbar) + columns/2) / columns) + 1
+    let extralength = 2
+    if (&laststatus == 0) || ((&laststatus == 1) && winnr("$") == 1)
+        " 22 is ruler's width?
+        let extralength = 22
+    endif
+    let cmdheight = ((strlen(ywvimbar) + extralength) / columns) + 1
     if cmdheight != &cmdheight
         execute 'setlocal cmdheight=' . cmdheight
-        redraw
+        if mode() == 'i'
+            redraw!
+        endif
     endif
     let ModeStr = <SID>Ywvim_GetMode()
     echo ModeStr
@@ -462,138 +629,42 @@ function s:Ywvim_echofinalresult(list) "{{{
     endfor
 endfunction "}}}
 
-function s:Ywvim_char(key) "{{{
-    let char = ''
-    let showchar = ''
-    let keycode = char2nr(a:key)
-    while 1
-        let key = nr2char(keycode)
-        let keypat = '\V'.escape(key, '\')
-        " 测试是否是有效的码表可用字母，如果是，则开始查询对应汉字。
-        if keycode == "\<BS>"
-            let pgnr = 1
-            let char = matchstr(char, '.*\ze.')
-            let showchar = matchstr(showchar, '.*\ze.')
-            if char != ''
-                let candidates = <SID>Ywvim_comp(char)
-                call <SID>Ywvim_echofinalresult([showchar, '[' . (s:ywvim_pagenr + 1) . ']', candidates])
-            else
-                return <SID>Ywvim_ReturnChar()
-            endif
-        elseif (key != '') && (match(s:ywvim_{b:ywvim_parameters["active_mb"]}_usedcodes, keypat) != -1)
-            let pgnr = 1
-            if key != ' '
-                let char .= key
-                if s:ywvim_chinesecode && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_chardefs, key)
-                    let showchar .= s:ywvim_{b:ywvim_parameters["active_mb"]}_chardefs[key]
-                else
-                    let showchar .= key
-                endif
-            endif
-            let candidates = <SID>Ywvim_comp(char)
-            let charcomplen = len(s:ywvim_complst)
-            if (charcomplen == 0) && (s:ywvim_matchexact == 0)
-                if s:ywvim_lockb
-                    let char = matchstr(char, '.*\ze.')
-                    let showchar = matchstr(showchar, '.*\ze.')
-                    let candidates = <SID>Ywvim_comp(char)
-                else " TODO 显示首选字+字母
-                endif
-            endif
-            if (s:ywvim_autoinput == 2) && (len(s:ywvim_pgbuf[s:ywvim_pagenr]) == 1)
-                return <SID>Ywvim_ReturnChar(0)
-            endif
-            call <SID>Ywvim_echofinalresult([showchar, '[' . (s:ywvim_pagenr + 1) . ']', candidates])
-        elseif (key != '') && (s:ywvim_{b:ywvim_parameters["active_mb"]}_pagednkeys =~ keypat)
-            let s:ywvim_pagenr += 1
-            if !has_key(s:ywvim_pgbuf, s:ywvim_pagenr)
-                let page = <SID>Ywvim_comp(char,s:ywvim_zhcode_startidx,s:ywvim_continue_idx)
-                if page != []
-                    if s:ywvim_lastpagenr <= s:ywvim_pagenr
-                        let s:ywvim_lastpagenr = s:ywvim_pagenr
-                    endif
-                    let s:ywvim_pgbuf[s:ywvim_pagenr] = page
-                else
-                    if s:ywvim_circlecandidates
-                        let s:ywvim_pagenr = 0
-                    else
-                        let s:ywvim_pagenr -= 1
-                    endif
-                endif
-            endif
-            call <SID>Ywvim_echofinalresult([showchar, '[' . (s:ywvim_pagenr + 1) . ']', s:ywvim_pgbuf[s:ywvim_pagenr]])
-            if s:ywvim_autoinput && (len(s:ywvim_pgbuf[s:ywvim_pagenr]) == 1)
-                return <SID>Ywvim_ReturnChar(0)
-            endif
-        elseif (key != '') && (s:ywvim_{b:ywvim_parameters["active_mb"]}_pageupkeys =~ keypat)
-            if s:ywvim_pagenr > 0
-                let s:ywvim_pagenr -= 1
-            elseif s:ywvim_circlecandidates
-                let s:ywvim_pagenr = s:ywvim_lastpagenr
-            endif
-            call <SID>Ywvim_echofinalresult([showchar, '[' . (s:ywvim_pagenr + 1) . ']', s:ywvim_pgbuf[s:ywvim_pagenr]])
-        elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_inputzh_keys =~ keypat " input Chinese
-            if s:ywvim_pgbuf[s:ywvim_pagenr] != []
-                return <SID>Ywvim_ReturnChar(0)
-            endif
-            return <SID>Ywvim_ReturnChar()
-        elseif '['.s:ywvim_{b:ywvim_parameters["active_mb"]}_inputzh_secondkeys.']' =~ keypat " input Second Chinese
-            if s:ywvim_pgbuf[s:ywvim_pagenr] != []
-                let secondcharidx = 0
-                if len(s:ywvim_pgbuf[s:ywvim_pagenr][0]) > 1
-                    let secondcharidx = 1
-                endif
-                return <SID>Ywvim_ReturnChar(secondcharidx)
-            endif
-            return <SID>Ywvim_ReturnChar()
-        elseif key =~ '[1-' . s:ywvim_{b:ywvim_parameters["active_mb"]}_listmax . ']' " number selection
-            if key <= len(s:ywvim_pgbuf[s:ywvim_pagenr])
-                return <SID>Ywvim_ReturnChar(key - 1)
-            else
-                call <SID>Ywvim_echofinalresult([showchar, '[' . (s:ywvim_pagenr + 1) . ']', candidates])
-            endif
-        elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_inputen_keys =~ keypat " input English
-            return <SID>Ywvim_ReturnChar(showchar)
-        elseif keycode == char2nr("\<C-^>")
-            return <SID>Ywvim_ReturnChar(0).<SID>Ywvim_UIsetting(0)
-        elseif keycode == char2nr("\<C-\>")
-            return <SID>Ywvim_ReturnChar(showchar)."\<C-^>"
-        elseif s:ywvim_pgbuf[s:ywvim_pagenr] != []
-            if s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic, key)
-                let key = <SID>Ywvim_puncp(key)
-            endif
-            return <SID>Ywvim_ReturnChar(0) . key
-        endif
-        let keycode = getchar()
-    endwhile
-endfunction "}}}
-
 function s:Ywvim_enmode() "{{{
     execute 'echohl ' . b:ywvim_parameters["highlight_imname"]
     echo <SID>Ywvim_GetMode() . "[En]: "
     let keycode = getchar()
-    let str_en_mode = s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar
+    let enchar = s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar
     if keycode != char2nr(s:ywvim_{b:ywvim_parameters["active_mb"]}_enchar)
-        let str_en_mode = input("[En]: ", nr2char(keycode)) | echohl None
+        let enstr = input("[En]: ", nr2char(keycode)) | echohl None
         call histdel("input", -1)
-    elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic, str_en_mode)
-        let str_en_mode = <SID>Ywvim_puncp(str_en_mode)
+    elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic, enchar)
+        let enstr = <SID>Ywvim_puncp(enchar)
+    else
+        let enstr = enchar
     endif
     if mode() != 'c'
         echo ''
     endif
-    return str_en_mode
+    return enstr
 endfunction "}}}
 
 function s:Ywvim_onepinyin() "{{{
     let ywvim_active_oldmb = b:ywvim_parameters["active_mb"]
+    let pychar = s:ywvim_{b:ywvim_parameters["active_mb"]}_pychar
     let b:ywvim_parameters["active_mb"] = 'py'
     call <SID>Ywvim_loadmb()
     echo <SID>Ywvim_GetMode()
     execute 'echohl ' . b:ywvim_parameters["highlight_imname"]
     echon '[' | echon s:ywvim_py_nameabbr | echon ']'
     echohl None | echon ' '
-    let char = <SID>Ywvim_char(nr2char(getchar()))
+    let keycode = getchar()
+    if keycode != char2nr(pychar)
+        let char = <SID>Ywvim_char(nr2char(keycode))
+    elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_zhpunc && has_key(s:ywvim_{b:ywvim_parameters["active_mb"]}_puncdic, pychar)
+        let char = <SID>Ywvim_puncp(pychar)
+    else
+        let char = pychar
+    endif
     let b:ywvim_parameters["active_mb"] = ywvim_active_oldmb
     call <SID>Ywvim_loadmb()
     return char
@@ -619,10 +690,17 @@ function s:Ywvim_ReturnChar(...) "{{{
     elseif getcmdtype() != '@'
         echo getcmdtype() . getcmdline()
     endif
+    unlet! b:ywuvim_char
+    unlet! b:ywuvim_showchar
+	unlet! b:ywuvim_lock_char
     if mode() != 'c'
         echo ''
+        " Thanks 蒋国华(15805165530 <jghua@139.com>)'s advice
+        return sb . "\<Ins>\<Ins>"
+    else
+        " "\<Ins>\<Ins>" doesn't work well.
+        return sb . " \<BS>"
     endif
-    return sb . " \<BS>"
 endfunction "}}}
 
 function Ywvim_toggle() "{{{
@@ -642,7 +720,7 @@ function Ywvim_toggle() "{{{
     if match(on_modes, current_mode) == -1
         let b:ywvim_parameters["oldcmdheight"] = &cmdheight
         call <SID>Ywvim_loadmb()
-        call <SID>Ywvim_keymap()
+        call <SID>Ywvim_keymap('a')
         let b:ywvim_parameters["mode"] .= current_mode
     else
         execute 'setlocal cmdheight=' . b:ywvim_parameters["oldcmdheight"]

@@ -6,7 +6,7 @@ This is a mirror of http://www.vim.org/scripts/script.php?script_id=2662
 如果你是 ywvim 的老用户, 在升级到新版本前, 请注意你的旧版本到新版本间*所有*的发布公告和已知 bugs, 然后查找对应设置的说明, 以免不兼容的改变给你带来不便.
 如果你在使用中发现了问题, 在报告之前, 请先查看下面的"已知问题"部分, 确定是否为已知 bug.
 
-下载最新脚本(1.21): http://www.vim.org/scripts/download_script.php?src_id=18177
+下载最新脚本(1.22): http://www.vim.org/scripts/download_script.php?src_id=18941
 下载最新码表(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 介绍:
