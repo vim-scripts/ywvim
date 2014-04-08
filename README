@@ -1,12 +1,13 @@
 This is a mirror of http://www.vim.org/scripts/script.php?script_id=2662
 
+介绍:
 ======= Chinese version =======
 注意!!!
 =======
 如果你是 ywvim 的老用户, 在升级到新版本前, 请注意你的旧版本到新版本间*所有*的发布公告和已知 bugs, 然后查找对应设置的说明, 以免不兼容的改变给你带来不便.
 如果你在使用中发现了问题, 在报告之前, 请先查看下面的"已知问题"部分, 确定是否为已知 bug.
 
-下载最新脚本(1.22): http://www.vim.org/scripts/download_script.php?src_id=18941
+下载最新脚本(1.23): http://www.vim.org/scripts/download_script.php?src_id=21747
 下载最新码表(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 介绍:
@@ -47,19 +48,20 @@ let g:ywvim_lockb = 1
 
 使用:
 =====
-<Ctrl-\>, <Ctrl-Shift-Space> 输入法开关.
+<Ctrl-Space>, <Ctrl-Shift-Space>, <Ctrl-@>, <Ctrl-\> 输入法开关.
 
 ;(分号) 临时英文.
 
-z 临时拼音.
+z, ` 临时拼音.(需要输入法变量 g:ywvim_ims 里有一个 'py' 拼音简称的码表)
 
 <Ctrl-^> 设置输入法:
     码表切换.
     中英标点切换.
+    候选项个数: 候选项个数.
     最大词长: 你想输入的最长的词. 设为 1 为单字模试.
     简繁转换开关.
-    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
-    反查码表开关.
+    只输入GB2312.
+    辅助编码提示开关.
 
 ,.-=    上下翻页.
 
@@ -141,18 +143,18 @@ gb: 只输入 gb2312 范围汉字.
 
 14. let g:ywvim_lockb = 0, 为 0 时, 在空码是不锁定键盘.
 
+15. let g:ywvim_theme = 'light', 设置输入栏主题颜色, 可选 'light' 或 'dark'.
+
 已知问题:
 =========
-1. 如果当前 buffer 的 ywvim 状态为开, 新开一个 buffer 后会显示 ywvim 为开启状态, 但实际不是. 原因不明.
+1. 反查码表对于大码表反应速度过慢. 临时解决方案, 换词汇量较小的码表或者把 listmax 设小一点.
 
-2. 反查码表对于大码表反应速度过慢. 临时解决方案, 换词汇量较小的码表或者把 listmax 设小一点.
-
-3. enmode 和可变中文标点的冲突.
+2. enmode 和可变中文标点的冲突.
 当绑定 enmode 到可变中文标点如 " 和 ' 时, 工作不正常. enmode 需要一个新的机制.
 
-回馈:
+问题与建议反馈:
 =====
-请发回馈, 补丁或建议到我电子邮箱.
+请发反馈, 补丁或建议到 vanopen AT gmail DOT com.
 
 待做:
 ============
@@ -204,7 +206,7 @@ NOTE!!!
 If you are a ywvim's old user, before upgrade to the latest version, please have a look at *all* of the release notes and known bugs then look for the more details about the corresponding part of them in the description, because maybe some imcompatible changes have been made between your old version and the latest one.
 If you find a bug when using, please look at the "known bugs" section to make sure whether it's a know bug before you report.
 
-Download the lastest script(1.21): http://www.vim.org/scripts/download_script.php?src_id=18177
+Download the lastest script(1.23): http://www.vim.org/scripts/download_script.php?src_id=21747
 Download the lastest mabiao(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 Introduce:
@@ -244,19 +246,20 @@ let g:ywvim_lockb = 0
 
 Usage:
 ======
-<Ctrl-\>, <Ctrl-Shift-Space>    Toggle ywvim between on and off.
+<Ctrl-Space>, <Ctrl-Shift-Space>, <Ctrl-@>, <Ctrl-\>    Toggle ywvim between on and off.
 
-;(semicolon) occasional English key.
+;(semicolon)    Temporary English key.
 
-z           occasional English key.
+z, `            Temporary pinyin input key. (need a abbrev name 'py' pinyin mabiao in g:ywvim_ims)
 
 <Ctrl-^> setup ywvim:
     码表切换.
     中英标点切换.
-    最大词长: 你想输入的最长的词. 设为 1 为单字模试.
+    候选项个数: candidates number.
+    最大词长: max pharase length.
     简繁转换开关.
-    gb2312开关: 让 ywvim 滤掉 gb2312 范围内的汉字.
-    反查码表开关.
+    只输入GB2312.
+    辅助编码提示开关.
 
 ,.-=        Pageup/pagedown.
 
@@ -327,7 +330,7 @@ You also can setup a parameter globally, format is let g:ywvim_listmax = 5, so y
 10. let g:ywvim_chinesecode = 1: when set, show the Chinese alphabets instead of English.
 (Thanks for medicalwei on #arch-cn@irc.oftc.net's suggestion.)
 
-11. let g:ywvim_gb = 1, set it to 1 means only input Chinese in gb2312.
+11. let g:ywvim_gb = 1, set it to 1 means only input Chinese in range of gb2312.
 
 12. let g:ywvim_preconv = 'g2b', define the preferred simplified-traditional conversion direction.
 
@@ -336,20 +339,20 @@ You also can setup a parameter globally, format is let g:ywvim_listmax = 5, so y
 
 14. let g:ywvim_lockb = 0, 0 means not to lock up the keyboard when there's no charactor matched with.
 
+15. let g:ywvim_theme = 'light', set color theme of IM bar, value should be 'light' or 'dark'.
+
 Known Bugs:
 ===========
-1. If ywvim is on in current buffer, and if you edit a new buffer, the status of ywvim seems to be on, but it isn't actually.
+1. Slow issue on big help mabiao. Workaround: use a relative small mabiao, or set the listmax to a smaller value.
 
-2. Slow issue on big help mabiao. Workaround: use a relative small mabiao, or set the listmax to a smaller value.
-
-3. enmode conflicts with paticular Chinese punctuations.
+2. enmode conflicts with paticular Chinese punctuations.
 Such as " and '. Enmode needs a new mechanism to implement.
 
 Feedback:
 =========
-Please send the feedback, patch or advice to my email.
+Please send the feedback, patch or advice to vanopen AT gmail DOT com.
 
-TODOes:
+TODO:
 ======
 
 FAQ:
