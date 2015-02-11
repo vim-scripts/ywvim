@@ -1,7 +1,7 @@
 " mY oWn VimIM.
 " Author: Wu, Yue <ywupub@gmail.com>
-" Last Change:	2014-04-07
-" Release Version: 1.23
+" Last Change:	2015-02-11
+" Release Version: 1.24
 " License: BSD
 
 " ~/projects/vimscript/ywvim/changelog
@@ -226,16 +226,19 @@ function s:YwvimHighlight() "{{{
         if &t_Co == 8
             highlight ywvimIMnormal ctermfg=7 ctermbg=0
             highlight ywvimIMname ctermfg=4 ctermbg=0
+            highlight ywvimIMCursor ctermbg=4
             highlight ywvimIMnr term=underline ctermfg=4 ctermbg=0
             highlight ywvimIMcode ctermfg=1 ctermbg=0
         elseif &t_Co == 16
             highlight ywvimIMnormal ctermfg=7 ctermbg=0
             highlight ywvimIMname ctermfg=1 ctermbg=0
+            highlight ywvimIMCursor ctermbg=1
             highlight ywvimIMnr term=underline ctermfg=1 ctermbg=0
             highlight ywvimIMcode ctermfg=4 ctermbg=0
         else
             highlight ywvimIMnormal ctermfg=LightGrey guifg=LightGrey ctermbg=Black guibg=Black
             highlight ywvimIMname ctermfg=DarkBlue guifg=Blue ctermbg=Black guibg=Black
+            highlight ywvimIMCursor ctermbg=DarkBlue guibg=Blue
             highlight ywvimIMnr term=underline ctermfg=DarkBlue guifg=Blue ctermbg=Black guibg=Black
             highlight ywvimIMcode ctermfg=DarkRed guifg=Red ctermbg=Black guibg=Black
         endif
@@ -243,16 +246,19 @@ function s:YwvimHighlight() "{{{
         if &t_Co == 8
             highlight ywvimIMnormal ctermfg=0 ctermbg=7
             highlight ywvimIMname ctermfg=4 ctermbg=7
+            highlight ywvimIMCursor ctermbg=4
             highlight ywvimIMnr term=underline ctermfg=4 ctermbg=7
             highlight ywvimIMcode ctermfg=1 ctermbg=7
         elseif &t_Co == 16
             highlight ywvimIMnormal ctermfg=0 ctermbg=7
             highlight ywvimIMname ctermfg=1 ctermbg=7
+            highlight ywvimIMCursor ctermbg=1
             highlight ywvimIMnr term=underline ctermfg=1 ctermbg=7
             highlight ywvimIMcode ctermfg=4 ctermbg=7
         else
             highlight ywvimIMnormal ctermfg=black guifg=black ctermbg=LightGrey guibg=LightGrey
             highlight ywvimIMname ctermfg=DarkBlue guifg=Blue ctermbg=LightGrey guibg=LightGrey
+            highlight ywvimIMCursor ctermbg=DarkBlue guibg=Blue
             highlight ywvimIMnr term=underline ctermfg=DarkBlue guifg=Blue ctermbg=LightGrey guibg=LightGrey
             highlight ywvimIMcode ctermfg=Red guifg=Red ctermbg=LightGrey guibg=LightGrey
         endif
@@ -260,36 +266,48 @@ function s:YwvimHighlight() "{{{
     if s:ywvim_conv != '' " 打开简繁转换
         if &t_Co == 8
             highlight ywvimIMname ctermfg=1 ctermbg=3
+            highlight ywvimIMCursor ctermbg=1
         elseif &t_Co == 16
             highlight ywvimIMname ctermfg=4 ctermbg=6
+            highlight ywvimIMCursor ctermbg=4
         else
             highlight ywvimIMname ctermfg=Red guifg=Red ctermbg=Yellow guibg=Yellow
+            highlight ywvimIMCursor ctermbg=Red guibg=Red
         endif
         if s:ywvim_{b:ywvim_parameters["active_mb"]}_gb == 1 " 打开只输入gb2312
             if &t_Co == 8
                 highlight ywvimIMname ctermfg=4 ctermbg=3
+                highlight ywvimIMCursor ctermbg=4
             elseif &t_Co == 16
                 highlight ywvimIMname ctermfg=1 ctermbg=6
+                highlight ywvimIMCursor ctermbg=1
             else
                 highlight ywvimIMname ctermfg=DarkBlue guifg=Blue ctermbg=Yellow guibg=Yellow
+                highlight ywvimIMCursor ctermbg=DarkBlue guibg=Blue
             endif
         endif
     elseif s:ywvim_{b:ywvim_parameters["active_mb"]}_gb == 0 " 关闭只输入gb2312
         if s:ywvim_theme == 'dark'
             if &t_Co == 8
                 highlight ywvimIMname ctermfg=1 ctermbg=0
+                highlight ywvimIMCursor ctermbg=1
             elseif &t_Co == 16
                 highlight ywvimIMname ctermfg=4 ctermbg=0
+                highlight ywvimIMCursor ctermbg=4
             else
                 highlight ywvimIMname ctermfg=Red guifg=Red ctermbg=DarkGrey guibg=Black
+                highlight ywvimIMCursor ctermbg=Red guibg=Red
             endif
         else
             if &t_Co == 8
                 highlight ywvimIMname ctermfg=1 ctermbg=7
+                highlight ywvimIMCursor ctermbg=1
             elseif &t_Co == 16
                 highlight ywvimIMname ctermfg=4 ctermbg=7
+                highlight ywvimIMCursor ctermbg=4
             else
                 highlight ywvimIMname ctermfg=Red guifg=Red ctermbg=LightGrey guibg=LightGrey
+                highlight ywvimIMCursor ctermbg=Red guibg=Red
             endif
         endif
     endif
@@ -348,7 +366,7 @@ function s:Ywvim_keymap(m) "{{{
     if (a:m == 'a')
         lnoremap <buffer> <C-^> <C-^><C-R>=<SID>Ywvim_UIsetting(1)<CR>
         if s:ywvim_esc_autoff
-            inoremap <buffer> <esc> <C-R>=Ywvim_toggle()<CR><C-R>=Ywvim_toggle_post()<CR><ESC>
+            inoremap <buffer> <esc> <ESC>:setlocal iminsert=0<bar>redraw!<CR>
         endif
     endif
     return ''
@@ -391,7 +409,7 @@ function s:Ywvim_UIsetting(m) "{{{1
         for im in s:ywvim_ims
             let nr += 1
             echohl Number | echon nr
-            echohl None | echon '. ' . im[1] . " "
+            echohl None | echon '. ' . im[1] . '(' . im[0] . ")\n"
         endfor
         let getnr = ''
         while getnr !~ '[' . join(range(1, nr), '') . ']'
@@ -787,24 +805,38 @@ function Ywvim_toggle() "{{{1
         let b:ywvim_parameters["mode"] = ''
     endif
     if match(b:ywvim_parameters["mode"], mode()) == -1
-        let b:ywvim_parameters["oldcmdheight"] = &cmdheight
-        call <SID>Ywvim_loadmb()
-        call <SID>Ywvim_keymap('a')
-        let b:ywvim_parameters["mode"] .= mode()
+        call <SID>Ywvim_toggle_on()
     else
-        if &cmdheight != b:ywvim_parameters["oldcmdheight"]
-            execute 'silent! setlocal cmdheight=' . b:ywvim_parameters["oldcmdheight"]
-        endif
-        unlet! s:ywvim_zhcode_idxs
-        unlet! s:ywvim_zhcode_idxe
-        unlet! s:ywvim_complst
-        let puncvardic = filter(keys(getbufvar("",'')), "v:val=~'_punc_\\d'")
-        for p in puncvardic
-            unlet b:{p}
-        endfor
-        let b:ywvim_parameters["mode"] = substitute(b:ywvim_parameters["mode"], mode(), '', '')
+        call <SID>Ywvim_toggle_off()
     endif
     return togglekey
+endfunction "}}}
+
+function s:Ywvim_toggle_on() "{{{1
+    let b:ywvim_parameters["oldcmdheight"] = &cmdheight
+    call <SID>Ywvim_loadmb()
+    call <SID>Ywvim_keymap('a')
+    let b:ywvim_parameters["mode"] .= mode()
+    " redir => b:ywvim_hl_cursor
+    " silent highlight Cursor
+    " redir END
+    " let b:ywvim_parameters["hl_cursor"] = matchstr(b:ywvim_hl_cursor, 'xxx\s*\zs.*')
+    " highlight! link Cursor ywvimIMCursor
+endfunction "}}}
+function s:Ywvim_toggle_off() "{{{1
+    if &cmdheight != b:ywvim_parameters["oldcmdheight"]
+        execute 'silent! setlocal cmdheight=' . b:ywvim_parameters["oldcmdheight"]
+    endif
+    unlet! s:ywvim_zhcode_idxs
+    unlet! s:ywvim_zhcode_idxe
+    unlet! s:ywvim_complst
+    let puncvardic = filter(keys(getbufvar("",'')), "v:val=~'_punc_\\d'")
+    for p in puncvardic
+        unlet b:{p}
+    endfor
+    let b:ywvim_parameters["mode"] = substitute(b:ywvim_parameters["mode"], mode(), '', '')
+    " execute 'highlight Cursor '.b:ywvim_parameters["hl_cursor"]
+    setlocal iminsert=0
 endfunction "}}}
 
 function s:Ywvim_NewBufFix() "{{{1 Fix new buffer's (lang) bug
@@ -813,7 +845,6 @@ function s:Ywvim_NewBufFix() "{{{1 Fix new buffer's (lang) bug
     endif
 endfunction "}}}
 autocmd BufEnter * call <SID>Ywvim_NewBufFix()
-" highlight CursorIM guifg=NONE guibg=Red
 
 imap <silent> <C-\> <C-R>=Ywvim_toggle()<CR>
 cmap <silent> <C-\> <C-R>=Ywvim_toggle()<CR>

@@ -7,7 +7,7 @@ This is a mirror of http://www.vim.org/scripts/script.php?script_id=2662
 如果你是 ywvim 的老用户, 在升级到新版本前, 请注意你的旧版本到新版本间*所有*的发布公告和已知 bugs, 然后查找对应设置的说明, 以免不兼容的改变给你带来不便.
 如果你在使用中发现了问题, 在报告之前, 请先查看下面的"已知问题"部分, 确定是否为已知 bug.
 
-下载最新脚本(1.23): http://www.vim.org/scripts/download_script.php?src_id=21747
+下载最新脚本(1.24): http://www.vim.org/scripts/download_script.php?src_id=22903
 下载最新码表(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 介绍:
@@ -206,7 +206,7 @@ NOTE!!!
 If you are a ywvim's old user, before upgrade to the latest version, please have a look at *all* of the release notes and known bugs then look for the more details about the corresponding part of them in the description, because maybe some imcompatible changes have been made between your old version and the latest one.
 If you find a bug when using, please look at the "known bugs" section to make sure whether it's a know bug before you report.
 
-Download the lastest script(1.23): http://www.vim.org/scripts/download_script.php?src_id=21747
+Download the lastest script(1.24): http://www.vim.org/scripts/download_script.php?src_id=22903
 Download the lastest mabiao(1.13): http://www.vim.org/scripts/download_script.php?src_id=10786
 
 Introduce:
